@@ -1,6 +1,7 @@
-import Person from '@mui/icons-material/Person'
-import Person2 from '@mui/icons-material/Person2'
-import Search from '@mui/icons-material/Search'
+import { LockOpen, Logout } from "@mui/icons-material";
+import Person from "@mui/icons-material/Person";
+import Person2 from "@mui/icons-material/Person2";
+import Search from "@mui/icons-material/Search";
 import {
   Alert,
   Autocomplete,
@@ -21,16 +22,16 @@ import {
   TextField,
   Typography,
   useTheme,
-} from '@mui/material'
-import axios, { AxiosResponse } from 'axios'
-import _ from 'lodash'
-import React, { ChangeEvent, useEffect, useState } from 'react'
+} from "@mui/material";
+import axios, { AxiosResponse } from "axios";
+import _ from "lodash";
+import React, { ChangeEvent, useEffect, useState } from "react";
 
-import { UserAccount, Worker } from '../lib/libsData'
+import { UserAccount, Worker } from "../lib/libsData";
 
 export type AppUser = {
   userName: string;
-  fullName: string;
+  userGuid: string;
   auth: boolean;
 };
 
@@ -41,11 +42,13 @@ export default function Home() {
   const [searchUser, setSearchUser] = useState<string>();
   const [selUser, setSelUser] = useState<UserAccount | null>(null);
   const [userNotFoundMsg, setUserNotFoundMsg] = useState<string>("");
+  const [loginUserName, setLoginUserName] = useState<string>("");
   const [appUser, setAppUser] = useState<AppUser>({
     userName: "",
-    fullName: "",
+    userGuid: "",
     auth: false,
   });
+  const [tiedUser, setTiedUser] = useState<UserAccount | null>(null);
 
   const getWorkers = () => {
     axios
@@ -61,35 +64,43 @@ export default function Home() {
     getWorkers();
   }, []);
 
-  const searchForUser = () => {
+  const searchForUser = (isLogin: boolean = false) => {
     setLoading(true);
     setUserNotFoundMsg("");
-    if (_.isEmpty(searchUser)) {
+    let userNameSearch: string | undefined = searchUser;
+    if (isLogin) userNameSearch = loginUserName;
+    if (_.isEmpty(userNameSearch) || _.isNil(userNameSearch)) {
       setUserNotFoundMsg("Please enter a user account before searching");
       setLoading(false);
       return;
     }
-    if (!searchUser?.endsWith("_ex")) {
+    if (!userNameSearch.endsWith("_ex")) {
       setUserNotFoundMsg(
-        "You cannot update a user account for a non-consultant user"
+        "You cannot search for a user account for a non-consultant user"
       );
       setLoading(false);
       return;
     }
     axios
-      .get(`api/users/${searchUser}`)
+      .get(`api/users/${userNameSearch}`)
       .then((response: AxiosResponse<UserAccount>) => {
         if (_.isNil(response.data.GUID))
           setUserNotFoundMsg(
-            `A user with the user name of ${searchUser} was not found.  Please TableRowy again.`
+            `A user with the user name of ${userNameSearch} was not found.`
           );
-        else setSelUser(response.data);
+        else if (isLogin) {
+          let appUser: AppUser = { userName: "", userGuid: "", auth: false };
+          appUser.userName = response.data.Username;
+          appUser.userGuid = response.data.GUID;
+          appUser.auth = true;
+          setAppUser(appUser);
+          setSelUser(response.data);
+          setSearchUser(response.data.Username);
+        } else setSelUser(response.data);
       })
       .catch((response: AxiosResponse<any>) => console.log(response))
       .finally(() => setLoading(false));
   };
-
-  const [tiedUser, setTiedUser] = useState<UserAccount | null>(null);
 
   const tieUserAndEmp = async (): Promise<void> => {
     try {
@@ -105,8 +116,12 @@ export default function Home() {
       setUserNotFoundMsg(JSON.stringify(e));
     } finally {
       getWorkers();
-      searchForUser();
+      searchForUser(false);
     }
+  };
+
+  const login = (): void => {
+    searchForUser(true);
   };
 
   const theme = useTheme();
@@ -122,6 +137,21 @@ export default function Home() {
           }}
         />
       </Backdrop>
+      {appUser.auth && (
+        <Box sx={{ textAlign: "right", mb: 4 }}>
+          <Typography variant="caption">
+            Logged In: {appUser.userName}
+          </Typography>
+          <IconButton
+            sx={{ ml: 2 }}
+            onClick={() =>
+              setAppUser({ auth: false, userName: "", userGuid: "" })
+            }
+          >
+            <Logout></Logout>
+          </IconButton>
+        </Box>
+      )}
       {appUser.auth && (
         <Grid container spacing={4}>
           {tiedUser && (
@@ -153,6 +183,7 @@ export default function Home() {
           )}
           <Grid item xs={12}>
             <TextField
+              disabled
               sx={{ width: "100%" }}
               variant="standard"
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -163,7 +194,7 @@ export default function Home() {
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={() => searchForUser()}>
+                    <IconButton onClick={() => searchForUser(false)}>
                       <Search />
                     </IconButton>
                   </InputAdornment>
@@ -280,7 +311,58 @@ export default function Home() {
           )}
         </Grid>
       )}
-      {!appUser.auth && <Paper></Paper>}
+      {!appUser.auth && (
+        <Paper
+          sx={{
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            background: theme.palette.grey[800],
+            color: theme.palette.common.black,
+            p: "30px",
+            mt: "30px",
+            maxWidth: "450px",
+          }}
+        >
+          <Box
+            sx={{
+              mb: 2,
+              display: "flex",
+              alignItems: "center",
+              alignContent: "center",
+            }}
+          >
+            <LockOpen
+              sx={{ color: theme.palette.common.white, fontSize: "40px" }}
+            ></LockOpen>
+            <Typography
+              variant="h5"
+              sx={{ color: theme.palette.common.white, ml: 1 }}
+            >
+              FUSION user switcher
+            </Typography>
+          </Box>
+          <Box sx={{ mb: 6 }}>
+            <TextField
+              variant="standard"
+              value={loginUserName}
+              onChange={(e) => setLoginUserName(e.currentTarget.value)}
+              label="enter your fusion user name"
+              fullWidth
+            ></TextField>
+          </Box>
+          <Box sx={{ textAlign: "right" }}>
+            <Button
+              startIcon={<LockOpen />}
+              variant="contained"
+              fullWidth
+              onClick={() => searchForUser(true)}
+            >
+              Login
+            </Button>
+          </Box>
+        </Paper>
+      )}
 
       <Snackbar
         open={userNotFoundMsg != ""}
