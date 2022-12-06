@@ -39,7 +39,6 @@ export default function Home() {
     axios
       .get("api/workers")
       .then((response: AxiosResponse<Worker[]>) => {
-        console.log(response.data);
         setWorkers(response.data);
       })
       .catch((response: AxiosResponse<any>) => console.log(response))
@@ -62,14 +61,21 @@ export default function Home() {
       .finally(() => setLoading(false));
   };
 
-  const tieUserAndEmp = ({
-    userGuid,
-    workerPersId,
-  }: {
-    userGuid: string;
-    workerPersId: number;
-  }): Promise<UserAccount> => {
-    axios.get();
+  const [tiedUser, setTiedUser] = useState<UserAccount | null>(null);
+
+  const tieUserAndEmp = async (): Promise<void> => {
+    try {
+      setLoading(true);
+      const response = await axios.post("api/users", {
+        userGuid: selUser?.GUID,
+        workerPersId: selWorker?.PersonId,
+      });
+      setTiedUser(response.data);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const theme = useTheme();
@@ -113,7 +119,6 @@ export default function Home() {
             options={workers}
             sx={{ width: "100%" }}
             getOptionLabel={(option: Worker) => {
-              console.log(option);
               return `${option.names[0].DisplayName} - ${option.PersonNumber}`;
             }}
             onChange={(event: any, newValue: Worker | null) => {
@@ -206,9 +211,12 @@ export default function Home() {
         )}
         {selUser && selWorker && (
           <Grid item xs={12} sx={{ textAlign: "right" }}>
-            <Button>Tie Worker and User</Button>
+            <Button onClick={() => tieUserAndEmp()}>Tie Worker and User</Button>
           </Grid>
         )}
+        <Grid item xs={12}>
+          {JSON.stringify(tiedUser)}
+        </Grid>
       </Grid>
       <Snackbar
         open={userNotFoundMsg != ""}
