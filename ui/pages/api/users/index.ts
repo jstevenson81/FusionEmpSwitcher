@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import _ from 'lodash'
 import { NextApiRequest, NextApiResponse } from 'next'
 
@@ -22,14 +22,15 @@ export default async function handler(
       );
 
     const userCheck = await axios.get<UserAccount>(
-      `${actions.userAccounts}/${userGuid}`
+      `${actions.userAccounts}/${userGuid}?onlyData=true`
     );
     if (_.isNil(userCheck.data.GUID) || userCheck.data.GUID !== userGuid)
       throw new Error(`The user account GUID ${userGuid} was not found`);
 
     const personCheck = await axios.get<OracleResponse<Worker>>(
-      `${actions.workers}/?q=PersonId=${workerPersId}&fields=PersonId,PersonNumber`
+      `${actions.workers}/?onlyData=true&q=PersonId=${workerPersId}&fields=PersonId,PersonNumber`
     );
+
     if (_.isEmpty(personCheck.data.items)) {
       throw new Error(`The person with id ${workerPersId} was not found`);
     }
@@ -39,24 +40,52 @@ export default async function handler(
     );
 
     const targetUser = userCheck.data;
-    const targetPerUsrAcct = targetPersUserResp.data.items[0];
+    const targetPerUsrAcct =
+      targetPersUserResp.data.count === 1
+        ? targetPersUserResp.data.items[0]
+        : null;
 
-    if (!_.isNil(targetPerUsrAcct.PersonId)) {
-      // we have to null out the target person's user account
+    // set both account to have no person record
+    await axios.patch(`${actions.userAccounts}/${targetUser.GUID}`, {
+      PersonId: null,
+    });
+    // only set this one to null if it isn't already null
+    if (!_.isNil(targetPerUsrAcct)) {
       await axios.patch(`${actions.userAccounts}/${targetPerUsrAcct.GUID}`, {
         PersonId: null,
       });
     }
     // set the person record to the user account of the current user
-    const userResponse = await axios.patch<UserAccount>(
+    await axios.patch<UserAccount>(
       `${actions.userAccounts}/${targetUser.GUID}`,
       {
         PersonId: workerPersId,
       }
     );
 
-    res.status(200).json(userResponse);
+    // set the suspended flag of the user we just added this account to
+    // as not suspenede
+    const userResponse = await axios.patch<UserAccount>(
+      `${actions.userAccounts}/${targetUser.GUID}`,
+      {
+        SuspendedFlag: false,
+      }
+    );
+
+    res.status(200).json(userResponse.data);
   } catch (e) {
-    res.status(400).json(e);
+    console.log(e);
+    const axiosError = e as AxiosError;
+    res.status(400).json({
+      error: axiosError.response?.data,
+      response: {
+        status: axiosError.response?.status,
+        statusText: axiosError.response?.statusText,
+        config: {
+          url: axiosError.response?.config.url,
+          passedData: axiosError.response?.config.data,
+        },
+      },
+    });
   }
 }

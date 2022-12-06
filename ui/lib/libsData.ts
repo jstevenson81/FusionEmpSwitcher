@@ -24,6 +24,7 @@ export type UserAccount = {
   PersonId: number;
   PersonNumber: string;
   GUID: string;
+  SuspendedFlag: boolean;
 };
 
 export const auth = {
