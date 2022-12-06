@@ -15,8 +15,8 @@ export default async function handler(
       throw new Error(
         `${req.method} is not supported for this endpoint.  Please use a post`
       );
-    const { userGuid, personId } = req.body;
-    if (_.isNil(userGuid) || _.isNil(personId))
+    const { userGuid, workerPersId } = req.body;
+    if (_.isNil(userGuid) || _.isNil(workerPersId))
       throw new Error(
         'The request body must look like the following {"userGuid": string, "personId", number}'
       );
@@ -28,14 +28,14 @@ export default async function handler(
       throw new Error(`The user account GUID ${userGuid} was not found`);
 
     const personCheck = await axios.get<OracleResponse<Worker>>(
-      `${actions.workers}/?q=PersonId=${personId}&fields=PersonId,PersonNumber`
+      `${actions.workers}/?q=PersonId=${workerPersId}&fields=PersonId,PersonNumber`
     );
     if (_.isEmpty(personCheck.data.items)) {
-      throw new Error(`The person with id ${personId} was not found`);
+      throw new Error(`The person with id ${workerPersId} was not found`);
     }
 
     const targetPersUserResp = await axios.get<OracleResponse<UserAccount>>(
-      `${actions.userAccounts}/?onlyData=true&q=PersonId=${personId}`
+      `${actions.userAccounts}/?onlyData=true&q=PersonId=${workerPersId}`
     );
 
     const targetUser = userCheck.data;
@@ -48,10 +48,10 @@ export default async function handler(
       });
     }
     // set the person record to the user account of the current user
-    const userResponse = await axios.patch(
+    const userResponse = await axios.patch<UserAccount>(
       `${actions.userAccounts}/${targetUser.GUID}`,
       {
-        PersonId: personId,
+        PersonId: workerPersId,
       }
     );
 
