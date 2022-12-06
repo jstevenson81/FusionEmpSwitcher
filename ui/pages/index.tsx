@@ -28,6 +28,12 @@ import React, { ChangeEvent, useEffect, useState } from 'react'
 
 import { UserAccount, Worker } from '../lib/libsData'
 
+export type AppUser = {
+  userName: string;
+  fullName: string;
+  auth: boolean;
+};
+
 export default function Home() {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [selWorker, setSelWorker] = useState<Worker | null>(null);
@@ -35,6 +41,11 @@ export default function Home() {
   const [searchUser, setSearchUser] = useState<string>();
   const [selUser, setSelUser] = useState<UserAccount | null>(null);
   const [userNotFoundMsg, setUserNotFoundMsg] = useState<string>("");
+  const [appUser, setAppUser] = useState<AppUser>({
+    userName: "",
+    fullName: "",
+    auth: false,
+  });
 
   const getWorkers = () => {
     axios
@@ -111,157 +122,166 @@ export default function Home() {
           }}
         />
       </Backdrop>
-      <Grid container spacing={4}>
-        {tiedUser && (
-          <Grid item xs={12}>
-            <Alert
-              severity="success"
-              onClose={() => setTiedUser(null)}
-              sx={{ width: "100%" }}
-            >
-              <Typography variant="h6">Updated {tiedUser.Username}</Typography>
-              <Box sx={{ mb: 1 }}>
-                <Typography variant="caption">
-                  Congratulations! You updated the user account:{" "}
-                  <strong>{selUser?.Username}</strong> to be the employee:{" "}
-                  {selWorker?.names[0].DisplayName} - {selWorker?.PersonNumber}.
+      {appUser.auth && (
+        <Grid container spacing={4}>
+          {tiedUser && (
+            <Grid item xs={12}>
+              <Alert
+                severity="success"
+                onClose={() => setTiedUser(null)}
+                sx={{ width: "100%" }}
+              >
+                <Typography variant="h6">
+                  Updated {tiedUser.Username}
                 </Typography>
-              </Box>
-              <Typography variant="caption" component="small">
-                <strong>
-                  NOTE: If you want to switch back, just select the employee{" "}
-                  from the drop down list and tie back to that user account.
-                </strong>
+                <Box sx={{ mb: 1 }}>
+                  <Typography variant="caption">
+                    Congratulations! You updated the user account:{" "}
+                    <strong>{selUser?.Username}</strong> to be the employee:{" "}
+                    {selWorker?.names[0].DisplayName} -{" "}
+                    {selWorker?.PersonNumber}.
+                  </Typography>
+                </Box>
+                <Typography variant="caption" component="small">
+                  <strong>
+                    NOTE: If you want to switch back, just select the employee{" "}
+                    from the drop down list and tie back to that user account.
+                  </strong>
+                </Typography>
+              </Alert>
+            </Grid>
+          )}
+          <Grid item xs={12}>
+            <TextField
+              sx={{ width: "100%" }}
+              variant="standard"
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setSearchUser(e.currentTarget.value)
+              }
+              value={searchUser}
+              label="Enter a user account"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => searchForUser()}>
+                      <Search />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <Autocomplete
+              disablePortal
+              id="combo-box-demo"
+              options={workers}
+              isOptionEqualToValue={(option: Worker, value: Worker) =>
+                option.PersonId === value.PersonId
+              }
+              sx={{ width: "100%" }}
+              getOptionLabel={(option: Worker) => {
+                return `${option.names[0].DisplayName} - ${option.PersonNumber}`;
+              }}
+              onChange={(event: any, newValue: Worker | null) => {
+                setSelWorker(newValue);
+              }}
+              renderInput={(params) => (
+                <TextField {...params} label="Select an Employee" />
+              )}
+            />
+          </Grid>
+          {selUser && (
+            <Grid item xs={12}>
+              <Typography variant="h5" sx={{ mb: 2, textAlign: "center" }}>
+                Selected User: {selUser?.Username}
               </Typography>
-            </Alert>
-          </Grid>
-        )}
-        <Grid item xs={12}>
-          <TextField
-            sx={{ width: "100%" }}
-            variant="standard"
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setSearchUser(e.currentTarget.value)
-            }
-            value={searchUser}
-            label="Enter a user account"
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={() => searchForUser()}>
-                    <Search />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <Autocomplete
-            disablePortal
-            id="combo-box-demo"
-            options={workers}
-            isOptionEqualToValue={(option: Worker, value: Worker) =>
-              option.PersonId === value.PersonId
-            }
-            sx={{ width: "100%" }}
-            getOptionLabel={(option: Worker) => {
-              return `${option.names[0].DisplayName} - ${option.PersonNumber}`;
-            }}
-            onChange={(event: any, newValue: Worker | null) => {
-              setSelWorker(newValue);
-            }}
-            renderInput={(params) => (
-              <TextField {...params} label="Select an Employee" />
-            )}
-          />
-        </Grid>
-        {selUser && (
-          <Grid item xs={12}>
-            <Typography variant="h5" sx={{ mb: 2, textAlign: "center" }}>
-              Selected User: {selUser?.Username}
-            </Typography>
-            <Grid
-              container
-              spacing={0}
-              sx={{
-                alignContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Grid item xs={3} sx={{ textAlign: "center" }}>
-                <Person sx={{ fontSize: 150 }} />
-              </Grid>
-              <Grid item xs={8}>
-                <TableContainer component={Paper}>
-                  <Table>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell>Person Number:</TableCell>
-                        <TableCell>{selUser?.PersonNumber}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>User Name:</TableCell>
-                        <TableCell>{selUser?.Username}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>User ID:</TableCell>
-                        <TableCell>{selUser?.UserId}</TableCell>
-                      </TableRow>
-                      <TableRow sx={{ border: 0 }}>
-                        <TableCell>User GUID:</TableCell>
-                        <TableCell>{selUser?.GUID}</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+              <Grid
+                container
+                spacing={0}
+                sx={{
+                  alignContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Grid item xs={3} sx={{ textAlign: "center" }}>
+                  <Person sx={{ fontSize: 150 }} />
+                </Grid>
+                <Grid item xs={8}>
+                  <TableContainer component={Paper}>
+                    <Table>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell>Person Number:</TableCell>
+                          <TableCell>{selUser?.PersonNumber}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>User Name:</TableCell>
+                          <TableCell>{selUser?.Username}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>User ID:</TableCell>
+                          <TableCell>{selUser?.UserId}</TableCell>
+                        </TableRow>
+                        <TableRow sx={{ border: 0 }}>
+                          <TableCell>User GUID:</TableCell>
+                          <TableCell>{selUser?.GUID}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Grid>
               </Grid>
             </Grid>
-          </Grid>
-        )}
-        {selWorker && (
-          <Grid item xs={12}>
-            <Typography variant="h5" sx={{ textAlign: "center" }}>
-              Selected Worker: {selWorker.names[0].DisplayName}
-            </Typography>
-            <Grid
-              container
-              spacing={0}
-              sx={{
-                alignContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Grid item xs={3} sx={{ textAlign: "center" }}>
-                <Person2
-                  sx={{ fontSize: 150, color: theme.palette.common.black }}
-                />
-              </Grid>
-              <Grid item xs={8}>
-                <TableContainer component={Paper}>
-                  <Table>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell>Person Number:</TableCell>
-                        <TableCell>{selWorker.PersonNumber}</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Person Id:</TableCell>
-                        <TableCell>{selWorker.PersonId}</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+          )}
+          {selWorker && (
+            <Grid item xs={12}>
+              <Typography variant="h5" sx={{ textAlign: "center" }}>
+                Selected Worker: {selWorker.names[0].DisplayName}
+              </Typography>
+              <Grid
+                container
+                spacing={0}
+                sx={{
+                  alignContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Grid item xs={3} sx={{ textAlign: "center" }}>
+                  <Person2
+                    sx={{ fontSize: 150, color: theme.palette.common.black }}
+                  />
+                </Grid>
+                <Grid item xs={8}>
+                  <TableContainer component={Paper}>
+                    <Table>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell>Person Number:</TableCell>
+                          <TableCell>{selWorker.PersonNumber}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell>Person Id:</TableCell>
+                          <TableCell>{selWorker.PersonId}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Grid>
               </Grid>
             </Grid>
-          </Grid>
-        )}
-        {selUser && selWorker && (
-          <Grid item xs={12} sx={{ textAlign: "right" }}>
-            <Button onClick={() => tieUserAndEmp()}>Tie Worker and User</Button>
-          </Grid>
-        )}
-      </Grid>
+          )}
+          {selUser && selWorker && (
+            <Grid item xs={12} sx={{ textAlign: "right" }}>
+              <Button onClick={() => tieUserAndEmp()}>
+                Tie Worker and User
+              </Button>
+            </Grid>
+          )}
+        </Grid>
+      )}
+      {!appUser.auth && <Paper></Paper>}
+
       <Snackbar
         open={userNotFoundMsg != ""}
         autoHideDuration={6000}
