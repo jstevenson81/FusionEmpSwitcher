@@ -5,6 +5,7 @@ import {
   Alert,
   Autocomplete,
   Backdrop,
+  Box,
   Button,
   CircularProgress,
   Grid,
@@ -31,11 +32,11 @@ export default function Home() {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [selWorker, setSelWorker] = useState<Worker | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [searchUser, setSearchUser] = useState<string>("stevenjw_ex");
+  const [searchUser, setSearchUser] = useState<string>();
   const [selUser, setSelUser] = useState<UserAccount | null>(null);
   const [userNotFoundMsg, setUserNotFoundMsg] = useState<string>("");
 
-  useEffect(() => {
+  const getWorkers = () => {
     axios
       .get("api/workers")
       .then((response: AxiosResponse<Worker[]>) => {
@@ -43,11 +44,27 @@ export default function Home() {
       })
       .catch((response: AxiosResponse<any>) => console.log(response))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    getWorkers();
   }, []);
 
   const searchForUser = () => {
     setLoading(true);
     setUserNotFoundMsg("");
+    if (_.isEmpty(searchUser)) {
+      setUserNotFoundMsg("Please enter a user account before searching");
+      setLoading(false);
+      return;
+    }
+    if (!searchUser?.endsWith("_ex")) {
+      setUserNotFoundMsg(
+        "You cannot update a user account for a non-consultant user"
+      );
+      setLoading(false);
+      return;
+    }
     axios
       .get(`api/users/${searchUser}`)
       .then((response: AxiosResponse<UserAccount>) => {
@@ -65,6 +82,8 @@ export default function Home() {
 
   const tieUserAndEmp = async (): Promise<void> => {
     try {
+      setTiedUser(null);
+      setUserNotFoundMsg("");
       setLoading(true);
       const response = await axios.post("api/users", {
         userGuid: selUser?.GUID,
@@ -72,9 +91,10 @@ export default function Home() {
       });
       setTiedUser(response.data);
     } catch (e) {
-      console.log(e);
+      setUserNotFoundMsg(JSON.stringify(e));
     } finally {
-      setLoading(false);
+      getWorkers();
+      searchForUser();
     }
   };
 
@@ -92,6 +112,30 @@ export default function Home() {
         />
       </Backdrop>
       <Grid container spacing={4}>
+        {tiedUser && (
+          <Grid item xs={12}>
+            <Alert
+              severity="success"
+              onClose={() => setTiedUser(null)}
+              sx={{ width: "100%" }}
+            >
+              <Typography variant="h6">Updated {tiedUser.Username}</Typography>
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="caption">
+                  Congratulations! You updated the user account:{" "}
+                  <strong>{selUser?.Username}</strong> to be the employee:{" "}
+                  {selWorker?.names[0].DisplayName} - {selWorker?.PersonNumber}.
+                </Typography>
+              </Box>
+              <Typography variant="caption" component="small">
+                <strong>
+                  NOTE: If you want to switch back, just select the employee{" "}
+                  from the drop down list and tie back to that user account.
+                </strong>
+              </Typography>
+            </Alert>
+          </Grid>
+        )}
         <Grid item xs={12}>
           <TextField
             sx={{ width: "100%" }}
@@ -117,6 +161,9 @@ export default function Home() {
             disablePortal
             id="combo-box-demo"
             options={workers}
+            isOptionEqualToValue={(option: Worker, value: Worker) =>
+              option.PersonId === value.PersonId
+            }
             sx={{ width: "100%" }}
             getOptionLabel={(option: Worker) => {
               return `${option.names[0].DisplayName} - ${option.PersonNumber}`;
@@ -214,9 +261,6 @@ export default function Home() {
             <Button onClick={() => tieUserAndEmp()}>Tie Worker and User</Button>
           </Grid>
         )}
-        <Grid item xs={12}>
-          {JSON.stringify(tiedUser)}
-        </Grid>
       </Grid>
       <Snackbar
         open={userNotFoundMsg != ""}
