@@ -117,6 +117,7 @@ export default function Home() {
     } finally {
       getWorkers();
       searchForUser(false);
+      // comment
     }
   };
 
