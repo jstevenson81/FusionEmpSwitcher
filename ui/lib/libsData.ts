@@ -31,11 +31,17 @@ export const auth = {
   userName: "svc_sec_audit",
   password: "C%KKKia9L*G@1gXxoxLlA%yk7*nX0p",
   podUrl: "https://ewij-dev1.fa.us8.oraclecloud.com",
+  ordsUrl:
+    "https://g6b2527b56da518-queryfinitedev.adb.us-ashburn-1.oraclecloudapps.com/ords/admin",
 };
 
 export const actions = {
   workers: `${auth.podUrl}/hcmRestApi/resources/11.13.18.05/workers`,
   userAccounts: `${auth.podUrl}/hcmRestApi/resources/11.13.18.05/userAccounts`,
+  roles: `${auth.podUrl}/hcmRestApi/scim/roles`,
+  ords: {
+    saveRoles: `${auth.ordsUrl}/ucsroles`,
+  },
 };
 
 export const filters = {
