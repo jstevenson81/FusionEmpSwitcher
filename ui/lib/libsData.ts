@@ -1,3 +1,5 @@
+import _ from 'lodash'
+
 export type OracleResponse<T> = {
   items: T[];
   hasMore: boolean;
@@ -6,19 +8,19 @@ export type OracleResponse<T> = {
   offset: number;
 };
 
-export type WorkerName = {
+export type PodWorkername = {
   FirstName: string;
   LastName: string;
   DisplayName: string;
 };
 
-export type Worker = {
+export type PodWorker = {
   PersonNumber: string;
   PersonId: string;
-  names: WorkerName[];
+  names: PodWorkername[];
 };
 
-export type UserAccount = {
+export type PodUserAccount = {
   UserId: number;
   Username: string;
   PersonId: number;
@@ -36,11 +38,13 @@ export const auth = {
 };
 
 export const actions = {
-  workers: `${auth.podUrl}/hcmRestApi/resources/11.13.18.05/workers`,
-  userAccounts: `${auth.podUrl}/hcmRestApi/resources/11.13.18.05/userAccounts`,
-  roles: `${auth.podUrl}/hcmRestApi/scim/roles`,
+  fusion: {
+    workers: `${auth.podUrl}/hcmRestApi/resources/11.13.18.05/workers`,
+    userAccounts: `${auth.podUrl}/hcmRestApi/resources/11.13.18.05/userAccounts`,
+    roles: `${auth.podUrl}/hcmRestApi/scim/roles`,
+  },
   ords: {
-    saveRoles: `${auth.ordsUrl}/ucsroles`,
+    ucsRoles: `${auth.ordsUrl}/ucsroles`,
   },
 };
 
@@ -51,6 +55,9 @@ export const filters = {
     "?onlyData=true&fields=PersonId,PersonNumber,UserId,Username,GUID&limit=500",
 };
 
-export const setUserAccountNameFilter = (userName: string): string => {
-  return `${filters.userAccountName}&q=Username='${userName}'`;
+export const setUserAccountNameFilter = (
+  userName: string | string[]
+): string => {
+  const filterUserName = Array.isArray(userName) ? _.first(userName) : userName;
+  return `${filters.userAccountName}&q=Username='${filterUserName}'`;
 };

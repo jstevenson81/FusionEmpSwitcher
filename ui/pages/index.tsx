@@ -1,17 +1,11 @@
-import { LockOpen, Logout } from "@mui/icons-material";
-import Person from "@mui/icons-material/Person";
-import Person2 from "@mui/icons-material/Person2";
-import Search from "@mui/icons-material/Search";
+import Person from '@mui/icons-material/Person'
+import Person2 from '@mui/icons-material/Person2'
 import {
   Alert,
   Autocomplete,
-  Backdrop,
   Box,
   Button,
-  CircularProgress,
   Grid,
-  IconButton,
-  InputAdornment,
   Paper,
   Snackbar,
   Table,
@@ -22,12 +16,17 @@ import {
   TextField,
   Typography,
   useTheme,
-} from "@mui/material";
-import axios, { AxiosResponse } from "axios";
-import _ from "lodash";
-import React, { ChangeEvent, useEffect, useState } from "react";
+} from '@mui/material'
+import { color } from '@mui/system'
+import axios, { AxiosResponse } from 'axios'
+import _ from 'lodash'
+import React, { ChangeEvent, useEffect, useState } from 'react'
 
-import { UserAccount, Worker } from "../lib/libsData";
+import FusionLogin from '../components/fusionLogin'
+import Loader from '../components/loading'
+import LoggedInUser from '../components/loggedInUser'
+import UpdateUserNotif from '../components/updateUserNotif'
+import { PodUserAccount, PodWorker } from '../lib/libsData'
 
 export type AppUser = {
   userName: string;
@@ -36,24 +35,18 @@ export type AppUser = {
 };
 
 export default function Home() {
-  const [workers, setWorkers] = useState<Worker[]>([]);
-  const [selWorker, setSelWorker] = useState<Worker | null>(null);
+  const [workers, setWorkers] = useState<PodWorker[]>([]);
+  const [workerContext, setWorkerContext] = useState<PodWorker | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [searchUser, setSearchUser] = useState<string>();
-  const [selUser, setSelUser] = useState<UserAccount | null>(null);
+  const [userContext, setUserContext] = useState<PodUserAccount | null>(null);
   const [userNotFoundMsg, setUserNotFoundMsg] = useState<string>("");
-  const [loginUserName, setLoginUserName] = useState<string>("");
-  const [appUser, setAppUser] = useState<AppUser>({
-    userName: "",
-    userGuid: "",
-    auth: false,
-  });
-  const [tiedUser, setTiedUser] = useState<UserAccount | null>(null);
+  const [appUser, setAppUser] = useState<AppUser | null>(null);
+  const [tiedUser, setTiedUser] = useState<PodUserAccount | null>(null);
 
   const getWorkers = () => {
     axios
       .get("api/workers")
-      .then((response: AxiosResponse<Worker[]>) => {
+      .then((response: AxiosResponse<PodWorker[]>) => {
         setWorkers(response.data);
       })
       .catch((response: AxiosResponse<any>) => console.log(response))
@@ -64,17 +57,15 @@ export default function Home() {
     getWorkers();
   }, []);
 
-  const searchForUser = (isLogin: boolean = false) => {
+  const searchForUser = (userName: string) => {
     setLoading(true);
     setUserNotFoundMsg("");
-    let userNameSearch: string | undefined = searchUser;
-    if (isLogin) userNameSearch = loginUserName;
-    if (_.isEmpty(userNameSearch) || _.isNil(userNameSearch)) {
+    if (_.isEmpty(userName) || _.isNil(userName)) {
       setUserNotFoundMsg("Please enter a user account before searching");
       setLoading(false);
       return;
     }
-    if (!userNameSearch.endsWith("_ex")) {
+    if (!userName.endsWith("_ex")) {
       setUserNotFoundMsg(
         "You cannot search for a user account for a non-consultant user"
       );
@@ -82,21 +73,13 @@ export default function Home() {
       return;
     }
     axios
-      .get(`api/users/${userNameSearch}`)
-      .then((response: AxiosResponse<UserAccount>) => {
+      .get(`api/users/${userName}`)
+      .then((response: AxiosResponse<PodUserAccount>) => {
         if (_.isNil(response.data.GUID))
           setUserNotFoundMsg(
-            `A user with the user name of ${userNameSearch} was not found.`
+            `A user with the user name of ${userName} was not found.`
           );
-        else if (isLogin) {
-          let appUser: AppUser = { userName: "", userGuid: "", auth: false };
-          appUser.userName = response.data.Username;
-          appUser.userGuid = response.data.GUID;
-          appUser.auth = true;
-          setAppUser(appUser);
-          setSelUser(response.data);
-          setSearchUser(response.data.Username);
-        } else setSelUser(response.data);
+        else setUserContext(response.data);
       })
       .catch((response: AxiosResponse<any>) => console.log(response))
       .finally(() => setLoading(false));
@@ -108,261 +91,227 @@ export default function Home() {
       setUserNotFoundMsg("");
       setLoading(true);
       const response = await axios.post("api/users", {
-        userGuid: selUser?.GUID,
-        workerPersId: selWorker?.PersonId,
+        userGuid: userContext?.GUID,
+        workerPersId: workerContext?.PersonId,
       });
       setTiedUser(response.data);
     } catch (e) {
       setUserNotFoundMsg(JSON.stringify(e));
     } finally {
       getWorkers();
-      searchForUser(false);
+      if (appUser && appUser.userName) searchForUser(appUser.userName);
       // comment
     }
-  };
-
-  const login = (): void => {
-    searchForUser(true);
   };
 
   const theme = useTheme();
 
   return (
     <>
-      <Backdrop open={loading} sx={{ zIndex: 99999999999 }}>
-        <CircularProgress
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        />
-      </Backdrop>
-      {appUser.auth && (
-        <Box sx={{ textAlign: "right", mb: 4 }}>
-          <Typography variant="caption">
-            Logged In: {appUser.userName}
-          </Typography>
-          <IconButton
-            sx={{ ml: 2 }}
-            onClick={() =>
-              setAppUser({ auth: false, userName: "", userGuid: "" })
-            }
-          >
-            <Logout></Logout>
-          </IconButton>
-        </Box>
-      )}
-      {appUser.auth && (
-        <Grid container spacing={4}>
-          {tiedUser && (
-            <Grid item xs={12}>
-              <Alert
-                severity="success"
-                onClose={() => setTiedUser(null)}
-                sx={{ width: "100%" }}
-              >
-                <Typography variant="h6">
-                  Updated {tiedUser.Username}
-                </Typography>
-                <Box sx={{ mb: 1 }}>
-                  <Typography variant="caption">
-                    Congratulations! You updated the user account:{" "}
-                    <strong>{selUser?.Username}</strong> to be the employee:{" "}
-                    {selWorker?.names[0].DisplayName} -{" "}
-                    {selWorker?.PersonNumber}.
-                  </Typography>
-                </Box>
-                <Typography variant="caption" component="small">
-                  <strong>
-                    NOTE: If you want to switch back, just select the employee{" "}
-                    from the drop down list and tie back to that user account.
-                  </strong>
-                </Typography>
-              </Alert>
-            </Grid>
-          )}
-          <Grid item xs={12}>
-            <TextField
-              disabled
-              sx={{ width: "100%" }}
-              variant="standard"
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setSearchUser(e.currentTarget.value)
-              }
-              value={searchUser}
-              label="Enter a user account"
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={() => searchForUser(false)}>
-                      <Search />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <Autocomplete
-              disablePortal
-              id="combo-box-demo"
-              options={workers}
-              isOptionEqualToValue={(option: Worker, value: Worker) =>
-                option.PersonId === value.PersonId
-              }
-              sx={{ width: "100%" }}
-              getOptionLabel={(option: Worker) => {
-                return `${option.names[0].DisplayName} - ${option.PersonNumber}`;
-              }}
-              onChange={(event: any, newValue: Worker | null) => {
-                setSelWorker(newValue);
-              }}
-              renderInput={(params) => (
-                <TextField {...params} label="Select an Employee" />
-              )}
-            />
-          </Grid>
-          {selUser && (
-            <Grid item xs={12}>
-              <Typography variant="h5" sx={{ mb: 2, textAlign: "center" }}>
-                Selected User: {selUser?.Username}
-              </Typography>
-              <Grid
-                container
-                spacing={0}
-                sx={{
-                  alignContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Grid item xs={3} sx={{ textAlign: "center" }}>
-                  <Person sx={{ fontSize: 150 }} />
-                </Grid>
-                <Grid item xs={8}>
-                  <TableContainer component={Paper}>
-                    <Table>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell>Person Number:</TableCell>
-                          <TableCell>{selUser?.PersonNumber}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell>User Name:</TableCell>
-                          <TableCell>{selUser?.Username}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell>User ID:</TableCell>
-                          <TableCell>{selUser?.UserId}</TableCell>
-                        </TableRow>
-                        <TableRow sx={{ border: 0 }}>
-                          <TableCell>User GUID:</TableCell>
-                          <TableCell>{selUser?.GUID}</TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Grid>
-              </Grid>
-            </Grid>
-          )}
-          {selWorker && (
-            <Grid item xs={12}>
-              <Typography variant="h5" sx={{ textAlign: "center" }}>
-                Selected Worker: {selWorker.names[0].DisplayName}
-              </Typography>
-              <Grid
-                container
-                spacing={0}
-                sx={{
-                  alignContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Grid item xs={3} sx={{ textAlign: "center" }}>
-                  <Person2
-                    sx={{ fontSize: 150, color: theme.palette.common.black }}
-                  />
-                </Grid>
-                <Grid item xs={8}>
-                  <TableContainer component={Paper}>
-                    <Table>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell>Person Number:</TableCell>
-                          <TableCell>{selWorker.PersonNumber}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell>Person Id:</TableCell>
-                          <TableCell>{selWorker.PersonId}</TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Grid>
-              </Grid>
-            </Grid>
-          )}
-          {selUser && selWorker && (
-            <Grid item xs={12} sx={{ textAlign: "right" }}>
-              <Button onClick={() => tieUserAndEmp()}>
-                Tie Worker and User
-              </Button>
-            </Grid>
-          )}
-        </Grid>
-      )}
-      {!appUser.auth && (
-        <Paper
-          sx={{
-            margin: "0 auto",
-            display: "flex",
-            flexDirection: "column",
-            background: theme.palette.grey[800],
-            color: theme.palette.common.black,
-            p: "30px",
-            mt: "30px",
-            maxWidth: "450px",
-          }}
-        >
+      <Loader isLoading={loading} />
+      {appUser && appUser.auth && (
+        <>
           <Box
             sx={{
-              mb: 2,
               display: "flex",
-              alignItems: "center",
-              alignContent: "center",
+              alignContent: "flex-end",
+              justifyContent: "right",
             }}
           >
-            <LockOpen
-              sx={{ color: theme.palette.common.white, fontSize: "40px" }}
-            ></LockOpen>
-            <Typography
-              variant="h5"
-              sx={{ color: theme.palette.common.white, ml: 1 }}
+            <LoggedInUser
+              userName={appUser.userName}
+              logout={() => setAppUser(null)}
+            ></LoggedInUser>
+          </Box>
+
+          <Grid container spacing={4}>
+            {tiedUser && (
+              <UpdateUserNotif
+                message=""
+                notifEmp={workerContext!}
+                notifUser={userContext!}
+                onClose={() => setTiedUser(null)}
+              ></UpdateUserNotif>
+            )}
+            <Grid
+              item
+              xs={12}
+              md={4}
+              sx={{
+                borderRight: { md: "solid 2px #666666" },
+                pr: { md: 4 },
+                pb: { md: 6 },
+              }}
             >
-              FUSION user switcher
-            </Typography>
-          </Box>
-          <Box sx={{ mb: 6 }}>
-            <TextField
-              variant="standard"
-              value={loginUserName}
-              onChange={(e) => setLoginUserName(e.currentTarget.value)}
-              label="enter your fusion user name"
-              fullWidth
-            ></TextField>
-          </Box>
-          <Box sx={{ textAlign: "right" }}>
-            <Button
-              startIcon={<LockOpen />}
-              variant="contained"
-              fullWidth
-              onClick={() => searchForUser(true)}
-            >
-              Login
-            </Button>
-          </Box>
-        </Paper>
+              <Typography
+                variant="h6"
+                sx={{ mb: 4, textTransform: "uppercase" }}
+              >
+                Employee Selector
+              </Typography>
+              <Box sx={{ mb: 4 }}>
+                <TextField
+                  disabled
+                  sx={{ width: "100%" }}
+                  variant="outlined"
+                  value={appUser.userName}
+                  label="Your User Name"
+                />
+              </Box>
+              <Box>
+                <Autocomplete
+                  disablePortal
+                  id="combo-box-demo"
+                  options={workers}
+                  isOptionEqualToValue={(option: PodWorker, value: PodWorker) =>
+                    option.PersonId === value.PersonId
+                  }
+                  sx={{ width: "100%" }}
+                  getOptionLabel={(option: PodWorker) => {
+                    return `${option.names[0].DisplayName} - ${option.PersonNumber}`;
+                  }}
+                  onChange={(event: any, newValue: PodWorker | null) => {
+                    setWorkerContext(newValue);
+                  }}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Select an Employee" />
+                  )}
+                />
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={8}>
+              {userContext && (
+                <>
+                  <Typography
+                    variant="h6"
+                    sx={{ mb: 4, mt: { sm: 4 }, textTransform: "uppercase" }}
+                  >
+                    Selected Employee and User
+                  </Typography>
+                  <Box>
+                    <Grid
+                      container
+                      spacing={0}
+                      sx={{
+                        alignContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Grid item xs={3} sx={{ textAlign: "center" }}>
+                        <Person sx={{ fontSize: 150 }} />
+                      </Grid>
+                      <Grid item xs={8}>
+                        <TableContainer component={Paper}>
+                          <Table sx={{ width: 1 }}>
+                            <TableBody>
+                              <TableRow>
+                                <TableCell>Person Number:</TableCell>
+                                <TableCell>
+                                  {userContext?.PersonNumber}
+                                </TableCell>
+                              </TableRow>
+                              <TableRow>
+                                <TableCell>User Name:</TableCell>
+                                <TableCell>{userContext?.Username}</TableCell>
+                              </TableRow>
+                              <TableRow>
+                                <TableCell>User ID:</TableCell>
+                                <TableCell>{userContext?.UserId}</TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                </>
+              )}
+              {workerContext && (
+                <Box sx={{ mt: { sm: 4 } }}>
+                  <Grid
+                    container
+                    spacing={0}
+                    sx={{
+                      alignContent: "center",
+                      alignItems: "top",
+                    }}
+                  >
+                    <Grid item xs={3} sx={{ textAlign: "center" }}>
+                      <Person2
+                        sx={{
+                          fontSize: 150,
+                          color: theme.palette.grey[500],
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={8}>
+                      <TableContainer component={Paper}>
+                        <Table>
+                          <TableBody>
+                            <TableRow>
+                              <TableCell>Person Number:</TableCell>
+                              <TableCell>
+                                {workerContext.PersonNumber}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell>Person Id:</TableCell>
+                              <TableCell>{workerContext.PersonId}</TableCell>
+                            </TableRow>
+                            {userContext && workerContext && (
+                              <TableRow>
+                                <TableCell
+                                  colSpan={2}
+                                  align="right"
+                                  sx={{ border: 0 }}
+                                ></TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                      {userContext && workerContext && (
+                        <TableContainer component={Box}>
+                          <Table>
+                            <TableBody>
+                              <TableRow>
+                                <TableCell
+                                  sx={{
+                                    textAlign: "right",
+                                    border: "none",
+                                    pr: 0,
+                                  }}
+                                >
+                                  <Button
+                                    variant="contained"
+                                    onClick={() => tieUserAndEmp()}
+                                  >
+                                    Tie Worker and User
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      )}
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
+            </Grid>
+          </Grid>
+        </>
+      )}
+      {!appUser && (
+        <FusionLogin
+          onError={(msg) => setUserNotFoundMsg(msg)}
+          onLogin={(user) => {
+            setAppUser(user);
+            searchForUser(user.userName);
+          }}
+          startLoading={() => setLoading(true)}
+          stopLoading={() => setLoading(false)}
+        ></FusionLogin>
       )}
 
       <Snackbar
