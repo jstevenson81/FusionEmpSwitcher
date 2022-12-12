@@ -27,9 +27,9 @@ const getOrdsUcsRoles = async (
   return roles.data;
 };
 
-const ordsLib = {
+const OrdsLibrary = {
   deleteOrdsUcsRole,
   getOrdsUcsRoles,
 };
 
-export default ordsLib;
+export default OrdsLibrary;

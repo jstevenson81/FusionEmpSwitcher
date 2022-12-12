@@ -10,9 +10,9 @@ export default async function handler(
   res: NextApiResponse<fusionUserAccount | undefined | unknown>
 ) {
   try {
-    if (req.method !== 'POST')
+    if (req.method !== 'PATCH')
       throw new Error(
-        `${req.method} is not supported for this endpoint.  Please use a post`
+        `${req.method} is not supported for this endpoint.  Please use PATCH`
       );
     const { userGuid, workerPersId } = req.body;
     if (_.isNil(userGuid) || _.isNil(workerPersId))

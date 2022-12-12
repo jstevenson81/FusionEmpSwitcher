@@ -2,16 +2,17 @@ import axios from 'axios'
 import _ from 'lodash'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-import { auth } from '../../../../lib/commonLib'
-import HandleAxiosErrorResponse from '../../../../lib/errorHandlerAxios'
-import ScimLibrary from '../../../../lib/scimLib'
+import commonLib from '../../../../lib/commonLib'
+import auth from '../../../../lib/constants/auth'
 import { fusionUserAccount } from '../../../../lib/types/fusion/restEntities/fusionUserAccount'
 
 const ROLE_NAME = 'Employee';
 
 /**
  * This method handles saving a user's roles and giving them only the requested roles
- * based on a template.  Example: employee only get the Employee Abstract role
+ * based on a template.  Example: employee only get the Employee Abstract role.
+ * We save the entire set of their roles, and assign their new roles based on the
+ * templates they requested
  * @param {NextApiRequest} req
  * @param {NextApiResponse} res
  */
@@ -48,19 +49,7 @@ export default async function handler(
         "The body of the request must contain a user's user id as it is in the pod."
       );
     }
-
-    const role = await ScimLibrary.fusion.roles.getPodRole(ROLE_NAME);
-    const userRoles = await ScimLibrary.fusion.roles.getUserRoles(userName);
-    // store the user's roles if they are requesting they be stored
-    if (storeMyRoles) {
-      const existingRoles = await ScimLibrary.ords.roles.getOrdsUcsRoles(
-        userName
-      );
-      existingRoles.items.forEach(async (r) => {
-        await ScimLibrary.ords.roles.deleteOrdsUcsRole(r.id!);
-      });
-    }
   } catch (e) {
-    HandleAxiosErrorResponse({ e, res });
+    return commonLib.makeAxiosErrorResponse({ e, res });
   }
 }
