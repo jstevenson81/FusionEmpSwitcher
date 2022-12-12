@@ -4,11 +4,10 @@ import axios, { AxiosResponse } from 'axios'
 import _ from 'lodash'
 import { useState } from 'react'
 
-import { AppUser } from '../lib/types/appUser'
-import { PodUserAccount } from '../lib/types/podUserAccount'
+import { fusionUserAccount } from '../lib/types/fusion/restEntities/fusionUserAccount'
 
 type FusionLoginProps = {
-  onLogin(user: AppUser): void;
+  onLogin(user: appUser): void;
   onError(message: string): void;
   startLoading(): void;
   stopLoading(): void;
@@ -37,13 +36,13 @@ const fusionLogin: React.FC<FusionLoginProps> = (
     }
     axios
       .get(`api/users/${loginUserName}`)
-      .then((response: AxiosResponse<PodUserAccount>) => {
+      .then((response: AxiosResponse<fusionUserAccount>) => {
         if (_.isNil(response.data.GUID))
           props.onError(
             `A user with the user name of ${loginUserName} was not found.`
           );
         else {
-          let appUser: AppUser = { userName: '', userGuid: '', auth: false };
+          let appUser: appUser = { userName: '', userGuid: '', auth: false };
           appUser.userName = response.data.Username;
           appUser.userGuid = response.data.GUID;
           appUser.auth = true;

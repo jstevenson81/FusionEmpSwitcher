@@ -2,12 +2,12 @@ import { Alert, Box, Grid, Typography } from '@mui/material'
 import React from 'react'
 
 import { PodWorker } from '../lib/PodWorker'
-import { PodUserAccount } from '../lib/types/podUserAccount'
+import { fusionUserAccount } from '../lib/types/fusion/restEntities/fusionUserAccount'
 
 type UpdateUserNotifProps = {
   message: string;
   onClose(): void;
-  notifUser: PodUserAccount;
+  notifUser: fusionUserAccount;
   notifEmp: PodWorker;
 };
 const updateUserNotif: React.FC<UpdateUserNotifProps> = ({

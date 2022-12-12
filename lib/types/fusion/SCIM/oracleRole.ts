@@ -1,5 +1,5 @@
-import { oracleMember } from './OracleMember'
-import { oracleMeta } from './OracleMeta'
+import { oracleMember } from './oracleMember'
+import { oracleMeta } from './oracleMeta'
 
 export interface oracleRole {
   id: string;

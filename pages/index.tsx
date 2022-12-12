@@ -27,17 +27,19 @@ import Loader from '../components/loading'
 import LoggedInUser from '../components/loggedInUser'
 import UpdateUserNotif from '../components/updateUserNotif'
 import { PodWorker } from '../lib/PodWorker'
-import { AppUser } from '../lib/types/appUser'
-import { PodUserAccount } from '../lib/types/podUserAccount'
+import { appUser } from '../lib/types/app/appUser'
+import { fusionUserAccount } from '../lib/types/fusion/restEntities/fusionUserAccount'
 
 export default function Home() {
   const [workers, setWorkers] = useState<PodWorker[]>([]);
   const [workerContext, setWorkerContext] = useState<PodWorker | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [userContext, setUserContext] = useState<PodUserAccount | null>(null);
+  const [userContext, setUserContext] = useState<fusionUserAccount | null>(
+    null
+  );
   const [userNotFoundMsg, setUserNotFoundMsg] = useState<string>('');
-  const [appUser, setAppUser] = useState<AppUser | null>(null);
-  const [tiedUser, setTiedUser] = useState<PodUserAccount | null>(null);
+  const [appUser, setAppUser] = useState<appUser | null>(null);
+  const [tiedUser, setTiedUser] = useState<fusionUserAccount | null>(null);
 
   const getWorkers = () => {
     axios
@@ -70,7 +72,7 @@ export default function Home() {
     }
     axios
       .get(`api/users/${userName}`)
-      .then((response: AxiosResponse<PodUserAccount>) => {
+      .then((response: AxiosResponse<fusionUserAccount>) => {
         if (_.isNil(response.data.GUID))
           setUserNotFoundMsg(
             `A user with the user name of ${userName} was not found.`

@@ -3,7 +3,7 @@ import _ from 'lodash'
 
 import { actions, auth, filters } from '../../../lib/commonLib'
 import HandleAxiosErrorResponse from '../../../lib/errorHandlerAxios'
-import { OracleResponse } from '../../../lib/types/oracleResponse'
+import { fusionRestResponse } from '../../../lib/types/fusion/fusionRestResponse'
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 export default async function handler(
@@ -13,13 +13,13 @@ export default async function handler(
   try {
     axios.defaults.auth = { username: auth.userName, password: auth.password };
     const workerAction = `${actions.workers}${filters.workersName}`;
-    let workerResp = await axios.get<OracleResponse<Worker>>(workerAction);
+    let workerResp = await axios.get<fusionRestResponse<Worker>>(workerAction);
     let offset = 500;
     let looped = 1;
     let workers = workerResp.data.items;
 
     while (workerResp.data.hasMore) {
-      workerResp = await axios.get<OracleResponse<Worker>>(
+      workerResp = await axios.get<fusionRestResponse<Worker>>(
         `${actions.workers}${filters.workersName}&offset=${offset * looped}`
       );
 

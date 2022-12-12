@@ -1,4 +1,4 @@
-export interface UcsRole {
+export interface ordsRoleEntity {
   id: number | null;
   role_id: string;
   role_name: string;

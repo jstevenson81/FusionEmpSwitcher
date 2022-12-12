@@ -3,12 +3,11 @@ import _ from 'lodash'
 
 import commonLib from './commonLib'
 import constants from './constants'
-import { OracleRole } from './OracleRole'
-import { OracleScimRoleResponse } from './OracleScimRoleResponse'
-import { OrdsResponse } from './OrdsResponse'
-import { OracleResponse } from './types/oracleResponse'
-import { PodUserAccount } from './types/podUserAccount'
-import { UcsRole } from './UcsRole'
+import { fusionRestResponse } from './types/fusion/fusionRestResponse'
+import { fusionUserAccount } from './types/fusion/restEntities/fusionUserAccount'
+import { oracleRole } from './types/fusion/SCIM/oracleRole'
+import { oracleScimRoleResponse } from './types/fusion/SCIM/oracleScimRoleResponse'
+import { ordsRoleEntity } from './types/ords/entities/ordsRoleEntity'
 
 export const setAxiosDefaults = (): void => {
   axios.defaults.auth = {
@@ -23,25 +22,19 @@ const patchFusionUserNewPerson = async ({
 }: {
   targetUserGuid: string;
   targetWorkerPersId: string;
-}): Promise<PodUserAccount> => {
-  const targetUser = await ScimLibrary.fusion.userAccounts.getFusionUserByGuid(
-    targetUserGuid
-  );
+}): Promise<fusionUserAccount> => {
+  const targetUser = await getFusionUserByGuid(targetUserGuid);
   if (_.isNil(targetUser.GUID) || targetUser.GUID !== targetUserGuid)
     throw new Error(`The user account GUID ${targetUserGuid} was not found`);
 
-  const targetWorker =
-    await ScimLibrary.fusion.workers.getFusionWorkerByPersonId(
-      targetWorkerPersId
-    );
+  const targetWorker = await getFusionWorkerByPersonId(targetWorkerPersId);
   if (_.isEmpty(targetWorker.items)) {
     throw new Error(`The worker with id ${targetWorkerPersId} was not found`);
   }
 
-  const targetWorkerUserResp =
-    await ScimLibrary.fusion.userAccounts.getFusionUserByPersonId(
-      targetWorkerPersId
-    );
+  const targetWorkerUserResp = await getFusionUserByPersonId(
+    targetWorkerPersId
+  );
 
   const targetWorkerUser =
     !_.isNil(targetWorkerUserResp) && targetWorkerUserResp.count === 1
@@ -65,7 +58,7 @@ const patchFusionUserNewPerson = async ({
     );
   }
   // set the person record to the user account of the current user
-  await axios.patch<PodUserAccount>(
+  await axios.patch<fusionUserAccount>(
     `${constants.actions.fusion.userAccounts}/${targetUser.GUID}`,
     {
       PersonId: targetWorkerPersId,
@@ -73,7 +66,7 @@ const patchFusionUserNewPerson = async ({
   );
   // set the suspended flag of the user we just added this account to
   // as not suspenede
-  const userResponse = await axios.patch<PodUserAccount>(
+  const userResponse = await axios.patch<fusionUserAccount>(
     `${constants.actions.fusion.userAccounts}/${targetUser.GUID}`,
     {
       SuspendedFlag: false,
@@ -86,8 +79,8 @@ const patchFusionUserNewPerson = async ({
 
 const getFusionUserByPersonId = async (
   workerPersId: string
-): Promise<OracleResponse<PodUserAccount>> => {
-  const userResp = await axios.get<OracleResponse<PodUserAccount>>(
+): Promise<fusionRestResponse<fusionUserAccount>> => {
+  const userResp = await axios.get<fusionRestResponse<fusionUserAccount>>(
     `${constants.actions.fusion.userAccounts}/?onlyData=true&q=PersonId=${workerPersId}`
   );
 
@@ -96,17 +89,19 @@ const getFusionUserByPersonId = async (
 
 const getFusionWorkerByPersonId = async (
   workerPersId: string
-): Promise<OracleResponse<Worker>> => {
-  const personResp = await axios.get<OracleResponse<Worker>>(
+): Promise<fusionRestResponse<Worker>> => {
+  const personResp = await axios.get<fusionRestResponse<Worker>>(
     `${constants.actions.fusion.workers}/?onlyData=true&q=PersonId=${workerPersId}&fields=PersonId,PersonNumber`
   );
   return personResp.data;
 };
 
-const getFusionUserByGuid = async (guid: string): Promise<PodUserAccount> => {
+const getFusionUserByGuid = async (
+  guid: string
+): Promise<fusionUserAccount> => {
   setAxiosDefaults();
 
-  const resp = await axios.get<PodUserAccount>(
+  const resp = await axios.get<fusionUserAccount>(
     `${constants.actions.fusion.userAccounts}/${guid}?onlyData=true`
   );
   return resp.data;
@@ -114,21 +109,21 @@ const getFusionUserByGuid = async (guid: string): Promise<PodUserAccount> => {
 
 const getFusionUserByUserName = async (
   userName: string | string[]
-): Promise<OracleResponse<PodUserAccount>> => {
+): Promise<fusionRestResponse<fusionUserAccount>> => {
   setAxiosDefaults();
   const filter = commonLib.setUserAccountNameFilter(userName);
 
-  const userAccountResp = await axios.get<OracleResponse<PodUserAccount>>(
-    `${constants.actions.fusion.userAccounts}${filter}`
-  );
+  const userAccountResp = await axios.get<
+    fusionRestResponse<fusionUserAccount>
+  >(`${constants.actions.fusion.userAccounts}${filter}`);
   return userAccountResp.data;
 };
 
 const getPodRoleByName = async (
   roleName: string | string[]
-): Promise<OracleRole> => {
+): Promise<oracleRole> => {
   setAxiosDefaults();
-  const response = await axios.get<OracleScimRoleResponse>(
+  const response = await axios.get<oracleScimRoleResponse>(
     constants.actions.fusion.roles,
     {
       params: {
@@ -143,9 +138,9 @@ const getPodRoleByName = async (
 
 const getPodRolesByUserName = async (
   userName: string | string[]
-): Promise<OracleRole[]> => {
+): Promise<oracleRole[]> => {
   setAxiosDefaults();
-  const response = await axios.get<OracleScimRoleResponse>(
+  const response = await axios.get<oracleScimRoleResponse>(
     constants.actions.fusion.roles,
     {
       params: {
@@ -158,29 +153,6 @@ const getPodRolesByUserName = async (
   return response.data.Resources;
 };
 
-const deleteOrdsUcsRole = async (
-  roleId: number
-): Promise<OrdsResponse<UcsRole>> => {
-  const response = await axios.delete(
-    `${constants.actions.ords.ucsRoles}/${roleId}`
-  );
-  return response.data;
-};
-
-const getOrdsUcsRoles = async (
-  userName: string
-): Promise<OrdsResponse<UcsRole>> => {
-  const roles = await axios.get<OrdsResponse<UcsRole>>(
-    constants.actions.ords.ucsRoles,
-    {
-      params: {
-        q: `{USER_NAME: ${userName}}`,
-      },
-    }
-  );
-  return roles.data;
-};
-
 const postOrdsUcsRoles = async ({
   userName,
   userId,
@@ -188,12 +160,12 @@ const postOrdsUcsRoles = async ({
 }: {
   userName: string;
   userId: string;
-  roles: OracleRole[];
+  roles: oracleRole[];
 }): Promise<AxiosResponse[]> => {
   const responses: AxiosResponse[] = [];
 
   roles.forEach(async (role) => {
-    const ucsRole: UcsRole = {
+    const ucsRole: ordsRoleEntity = {
       id: null,
       role_id: role.id,
       role_name: role.displayName,
@@ -209,27 +181,18 @@ const postOrdsUcsRoles = async ({
 };
 
 const ScimLibrary = {
-  ords: {
-    roles: {
-      getOrdsUcsRoles,
-      postOrdsUcsRoles,
-      deleteOrdsUcsRole,
-    },
+  workers: {
+    getFusionWorkerByPersonId,
   },
-  fusion: {
-    workers: {
-      getFusionWorkerByPersonId,
-    },
-    userAccounts: {
-      getFusionUserByUserName,
-      getFusionUserByGuid,
-      getFusionUserByPersonId,
-      patchFusionUserNewPerson,
-    },
-    roles: {
-      getPodRolesByUserName,
-      getPodRoleByName,
-    },
+  userAccounts: {
+    getFusionUserByUserName,
+    getFusionUserByGuid,
+    getFusionUserByPersonId,
+    patchFusionUserNewPerson,
+  },
+  roles: {
+    getPodRolesByUserName,
+    getPodRoleByName,
   },
   axios: {
     setAxiosDefaults,

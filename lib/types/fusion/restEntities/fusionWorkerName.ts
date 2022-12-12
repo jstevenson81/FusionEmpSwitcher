@@ -1,5 +1,5 @@
-export type PodWorkername = {
+export interface fusionWorkerName {
   FirstName: string;
   LastName: string;
   DisplayName: string;
-};
+}

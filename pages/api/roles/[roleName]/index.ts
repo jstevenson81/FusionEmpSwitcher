@@ -5,7 +5,7 @@ import { NextApiRequest, NextApiResponse } from 'next'
 import { auth } from '../../../../lib/commonLib'
 import HandleAxiosErrorResponse from '../../../../lib/errorHandlerAxios'
 import ScimLibrary from '../../../../lib/scimLib'
-import { PodUserAccount } from '../../../../lib/types/podUserAccount'
+import { fusionUserAccount } from '../../../../lib/types/fusion/restEntities/fusionUserAccount'
 
 const ROLE_NAME = 'Employee';
 
@@ -18,7 +18,7 @@ const ROLE_NAME = 'Employee';
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<PodUserAccount | undefined | unknown>
+  res: NextApiResponse<fusionUserAccount | undefined | unknown>
 ) {
   try {
     if (req.method !== 'POST')

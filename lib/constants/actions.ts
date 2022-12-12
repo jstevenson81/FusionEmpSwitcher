@@ -1,3 +1,5 @@
+import auth from './auth'
+
 const actions = {
   fusion: {
     workers: `${auth.podUrl}/hcmRestApi/resources/11.13.18.05/workers`,
