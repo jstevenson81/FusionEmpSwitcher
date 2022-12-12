@@ -1,3 +1,3 @@
-export interface OrdsResponse<T> {
+export interface ordsResponse<T> {
   items: T[];
 }

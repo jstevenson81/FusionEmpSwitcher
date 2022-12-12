@@ -1,6 +1,6 @@
 import { oracleRole } from './OracleRole'
 
-export interface OracleScimRoleResponse {
+export interface oracleScimRoleResponse {
   itemsPerPage: number;
   startIndex: number;
   Resources: oracleRole[];
