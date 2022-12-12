@@ -4,7 +4,8 @@ import axios, { AxiosResponse } from 'axios'
 import _ from 'lodash'
 import { useState } from 'react'
 
-import { AppUser, PodUserAccount } from '../lib/libsData'
+import { AppUser } from '../lib/types/appUser'
+import { PodUserAccount } from '../lib/types/podUserAccount'
 
 type FusionLoginProps = {
   onLogin(user: AppUser): void;

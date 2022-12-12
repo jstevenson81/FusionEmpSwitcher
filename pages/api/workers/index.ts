@@ -1,8 +1,9 @@
 import axios from 'axios'
 import _ from 'lodash'
 
-import HandleAxiosErrorResponse from '../../../lib/errorLib'
-import { actions, auth, filters, OracleResponse } from '../../../ui/lib/libsData'
+import { actions, auth, filters } from '../../../lib/commonLib'
+import HandleAxiosErrorResponse from '../../../lib/errorHandlerAxios'
+import { OracleResponse } from '../../../lib/types/oracleResponse'
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 export default async function handler(

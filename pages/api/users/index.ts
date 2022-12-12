@@ -1,9 +1,9 @@
 import _ from 'lodash'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-import HandleAxiosErrorResponse from '../../../lib/errorLib'
+import HandleAxiosErrorResponse from '../../../lib/errorHandlerAxios'
 import ScimLibrary from '../../../lib/scimLib'
-import { PodUserAccount } from '../../../ui/lib/libsData'
+import { PodUserAccount } from '../../../lib/types/podUserAccount'
 
 export default async function handler(
   req: NextApiRequest,

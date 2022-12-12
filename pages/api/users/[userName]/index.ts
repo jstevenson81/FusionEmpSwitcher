@@ -2,9 +2,10 @@ import axios from 'axios'
 import _ from 'lodash'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-import HandleAxiosErrorResponse from '../../../../lib/errorLib'
+import { auth } from '../../../../lib/commonLib'
+import HandleAxiosErrorResponse from '../../../../lib/errorHandlerAxios'
 import ScimLibrary from '../../../../lib/scimLib'
-import { auth, PodUserAccount } from '../../../../ui/lib/libsData'
+import { PodUserAccount } from '../../../../lib/types/podUserAccount'
 
 export default async function handler(
   req: NextApiRequest,
@@ -19,7 +20,9 @@ export default async function handler(
         'The user name cannot be null or empty to search for a user account'
       );
 
-    const response = await ScimLibrary.fusion.roles.getPodUser(userName);
+    const response = await ScimLibrary.fusion.roles.getPodRolesByUserName(
+      userName
+    );
     res.status(200).json(_.first(response.items));
   } catch (e) {
     HandleAxiosErrorResponse({ e, res });

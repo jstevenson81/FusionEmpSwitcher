@@ -2,9 +2,10 @@ import axios from 'axios'
 import _ from 'lodash'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-import HandleAxiosErrorResponse from '../../../../ui/lib/errorLib'
-import { auth, PodUserAccount } from '../../../../ui/lib/libsData'
-import ScimLibrary from '../../../../ui/lib/scimLib'
+import { auth } from '../../../../lib/commonLib'
+import HandleAxiosErrorResponse from '../../../../lib/errorHandlerAxios'
+import ScimLibrary from '../../../../lib/scimLib'
+import { PodUserAccount } from '../../../../lib/types/podUserAccount'
 
 const ROLE_NAME = 'Employee';
 

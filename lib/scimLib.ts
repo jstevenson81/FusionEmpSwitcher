@@ -1,11 +1,20 @@
 import axios, { AxiosResponse } from 'axios'
 import _ from 'lodash'
 
-import { actions, auth, OracleResponse, PodUserAccount, setUserAccountNameFilter } from './libsData'
-import { OracleRole, OracleScimRoleResponse, OrdsResponse, UcsRole } from './scimTypes'
+import commonLib from './commonLib'
+import constants from './constants'
+import { OracleRole } from './OracleRole'
+import { OracleScimRoleResponse } from './OracleScimRoleResponse'
+import { OrdsResponse } from './OrdsResponse'
+import { OracleResponse } from './types/oracleResponse'
+import { PodUserAccount } from './types/podUserAccount'
+import { UcsRole } from './UcsRole'
 
 export const setAxiosDefaults = (): void => {
-  axios.defaults.auth = { username: auth.userName, password: auth.password };
+  axios.defaults.auth = {
+    username: constants.auth.userName,
+    password: constants.auth.password,
+  };
 };
 
 const patchFusionUserNewPerson = async ({
@@ -40,13 +49,16 @@ const patchFusionUserNewPerson = async ({
       : null;
 
   // set both account to have no person record
-  await axios.patch(`${actions.fusion.userAccounts}/${targetUser.GUID}`, {
-    PersonId: null,
-  });
+  await axios.patch(
+    `${constants.actions.fusion.userAccounts}/${targetUser.GUID}`,
+    {
+      PersonId: null,
+    }
+  );
   // only set this one to null if it isn't already null
   if (!_.isNil(targetWorkerUser)) {
     await axios.patch(
-      `${actions.fusion.userAccounts}/${targetWorkerUser.GUID}`,
+      `${constants.actions.fusion.userAccounts}/${targetWorkerUser.GUID}`,
       {
         PersonId: null,
       }
@@ -54,7 +66,7 @@ const patchFusionUserNewPerson = async ({
   }
   // set the person record to the user account of the current user
   await axios.patch<PodUserAccount>(
-    `${actions.fusion.userAccounts}/${targetUser.GUID}`,
+    `${constants.actions.fusion.userAccounts}/${targetUser.GUID}`,
     {
       PersonId: targetWorkerPersId,
     }
@@ -62,7 +74,7 @@ const patchFusionUserNewPerson = async ({
   // set the suspended flag of the user we just added this account to
   // as not suspenede
   const userResponse = await axios.patch<PodUserAccount>(
-    `${actions.fusion.userAccounts}/${targetUser.GUID}`,
+    `${constants.actions.fusion.userAccounts}/${targetUser.GUID}`,
     {
       SuspendedFlag: false,
     }
@@ -76,7 +88,7 @@ const getFusionUserByPersonId = async (
   workerPersId: string
 ): Promise<OracleResponse<PodUserAccount>> => {
   const userResp = await axios.get<OracleResponse<PodUserAccount>>(
-    `${actions.fusion.userAccounts}/?onlyData=true&q=PersonId=${workerPersId}`
+    `${constants.actions.fusion.userAccounts}/?onlyData=true&q=PersonId=${workerPersId}`
   );
 
   return userResp.data;
@@ -86,7 +98,7 @@ const getFusionWorkerByPersonId = async (
   workerPersId: string
 ): Promise<OracleResponse<Worker>> => {
   const personResp = await axios.get<OracleResponse<Worker>>(
-    `${actions.fusion.workers}/?onlyData=true&q=PersonId=${workerPersId}&fields=PersonId,PersonNumber`
+    `${constants.actions.fusion.workers}/?onlyData=true&q=PersonId=${workerPersId}&fields=PersonId,PersonNumber`
   );
   return personResp.data;
 };
@@ -95,7 +107,7 @@ const getFusionUserByGuid = async (guid: string): Promise<PodUserAccount> => {
   setAxiosDefaults();
 
   const resp = await axios.get<PodUserAccount>(
-    `${actions.fusion.userAccounts}/${guid}?onlyData=true`
+    `${constants.actions.fusion.userAccounts}/${guid}?onlyData=true`
   );
   return resp.data;
 };
@@ -104,22 +116,24 @@ const getFusionUserByUserName = async (
   userName: string | string[]
 ): Promise<OracleResponse<PodUserAccount>> => {
   setAxiosDefaults();
-  const filter = setUserAccountNameFilter(userName);
+  const filter = commonLib.setUserAccountNameFilter(userName);
 
   const userAccountResp = await axios.get<OracleResponse<PodUserAccount>>(
-    `${actions.fusion.userAccounts}${filter}`
+    `${constants.actions.fusion.userAccounts}${filter}`
   );
   return userAccountResp.data;
 };
 
-const getPodRoleByName = async (roleName: string): Promise<OracleRole> => {
+const getPodRoleByName = async (
+  roleName: string | string[]
+): Promise<OracleRole> => {
   setAxiosDefaults();
   const response = await axios.get<OracleScimRoleResponse>(
-    actions.fusion.roles,
+    constants.actions.fusion.roles,
     {
       params: {
         filter: `displayName eq "${roleName}"`,
-        attributes: "schemas,id,displayName",
+        attributes: 'schemas,id,displayName',
       },
     }
   );
@@ -128,15 +142,15 @@ const getPodRoleByName = async (roleName: string): Promise<OracleRole> => {
 };
 
 const getPodRolesByUserName = async (
-  userName: string
+  userName: string | string[]
 ): Promise<OracleRole[]> => {
   setAxiosDefaults();
   const response = await axios.get<OracleScimRoleResponse>(
-    actions.fusion.roles,
+    constants.actions.fusion.roles,
     {
       params: {
         filter: `userName eq "${userName}"`,
-        attributes: "id,roles.id,roles.displayName,roles.description",
+        attributes: 'id,roles.id,roles.displayName,roles.description',
       },
     }
   );
@@ -147,18 +161,23 @@ const getPodRolesByUserName = async (
 const deleteOrdsUcsRole = async (
   roleId: number
 ): Promise<OrdsResponse<UcsRole>> => {
-  const response = await axios.delete(`${actions.ords.ucsRoles}/${roleId}`);
+  const response = await axios.delete(
+    `${constants.actions.ords.ucsRoles}/${roleId}`
+  );
   return response.data;
 };
 
 const getOrdsUcsRoles = async (
   userName: string
 ): Promise<OrdsResponse<UcsRole>> => {
-  const roles = await axios.get<OrdsResponse<UcsRole>>(actions.ords.ucsRoles, {
-    params: {
-      q: `{USER_NAME: ${userName}}`,
-    },
-  });
+  const roles = await axios.get<OrdsResponse<UcsRole>>(
+    constants.actions.ords.ucsRoles,
+    {
+      params: {
+        q: `{USER_NAME: ${userName}}`,
+      },
+    }
+  );
   return roles.data;
 };
 
@@ -181,7 +200,9 @@ const postOrdsUcsRoles = async ({
       user_id: userId,
       user_name: userName,
     };
-    const response = await axios.post(actions.ords.ucsRoles, { ucsRole });
+    const response = await axios.post(constants.actions.ords.ucsRoles, {
+      ucsRole,
+    });
     responses.push(response);
   });
   return responses;

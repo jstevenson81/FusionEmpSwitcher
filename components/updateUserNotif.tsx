@@ -1,7 +1,8 @@
 import { Alert, Box, Grid, Typography } from '@mui/material'
 import React from 'react'
 
-import { PodUserAccount, PodWorker } from '../lib/libsData'
+import { PodWorker } from '../lib/PodWorker'
+import { PodUserAccount } from '../lib/types/podUserAccount'
 
 type UpdateUserNotifProps = {
   message: string;
@@ -18,19 +19,19 @@ const updateUserNotif: React.FC<UpdateUserNotifProps> = ({
   return (
     <Grid item xs={12}>
       <Alert
-        severity="success"
+        severity='success'
         onClose={() => onClose()}
-        sx={{ width: "100%" }}
+        sx={{ width: '100%' }}
       >
-        <Typography variant="h6">Updated {notifUser.Username}</Typography>
+        <Typography variant='h6'>Updated {notifUser.Username}</Typography>
         <Box sx={{ mb: 1 }}>
-          <Typography variant="caption">
-            Congratulations! You updated the user account:{" "}
-            <strong>{notifUser.Username}</strong> to be the employee:{" "}
+          <Typography variant='caption'>
+            Congratulations! You updated the user account:{' '}
+            <strong>{notifUser.Username}</strong> to be the employee:{' '}
             {notifEmp.names[0].DisplayName} - {notifEmp.PersonNumber}.
           </Typography>
         </Box>
-        <Typography variant="caption" component="small">
+        <Typography variant='caption' component='small'>
           <strong>
             NOTE: If you want to switch back, just select the employee from the
             drop down list and tie back to that user account.

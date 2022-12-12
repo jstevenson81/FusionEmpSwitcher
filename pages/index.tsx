@@ -22,11 +22,13 @@ import axios, { AxiosResponse } from 'axios'
 import _ from 'lodash'
 import React, { ChangeEvent, useEffect, useState } from 'react'
 
-import FusionLogin from '../'
+import FusionLogin from '../components/fusionLogin'
 import Loader from '../components/loading'
 import LoggedInUser from '../components/loggedInUser'
 import UpdateUserNotif from '../components/updateUserNotif'
-import { PodUserAccount, PodWorker } from '../ui/lib/libsData'
+import { PodWorker } from '../lib/PodWorker'
+import { AppUser } from '../lib/types/appUser'
+import { PodUserAccount } from '../lib/types/podUserAccount'
 
 export default function Home() {
   const [workers, setWorkers] = useState<PodWorker[]>([]);
