@@ -4,8 +4,7 @@ import axios, { AxiosResponse } from 'axios'
 import _ from 'lodash'
 import { useState } from 'react'
 
-import { PodUserAccount } from '../lib/libsData'
-import { AppUser } from '../pages'
+import { AppUser, PodUserAccount } from '../lib/libsData'
 
 type FusionLoginProps = {
   onLogin(user: AppUser): void;
@@ -17,20 +16,20 @@ const fusionLogin: React.FC<FusionLoginProps> = (
   props: FusionLoginProps
 ): JSX.Element => {
   const theme = useTheme();
-  const [loginUserName, setLoginUserName] = useState<string>("");
+  const [loginUserName, setLoginUserName] = useState<string>('');
 
   const searchForUser = () => {
     props.startLoading();
-    props.onError("");
+    props.onError('');
 
     if (_.isEmpty(loginUserName) || _.isNil(loginUserName)) {
-      props.onError("Please enter a user account before searching");
+      props.onError('Please enter a user account before searching');
       props.stopLoading();
       return;
     }
-    if (!loginUserName.endsWith("_ex")) {
+    if (!loginUserName.endsWith('_ex')) {
       props.onError(
-        "You cannot search for a user account for a non-consultant user"
+        'You cannot search for a user account for a non-consultant user'
       );
       props.stopLoading();
       return;
@@ -43,7 +42,7 @@ const fusionLogin: React.FC<FusionLoginProps> = (
             `A user with the user name of ${loginUserName} was not found.`
           );
         else {
-          let appUser: AppUser = { userName: "", userGuid: "", auth: false };
+          let appUser: AppUser = { userName: '', userGuid: '', auth: false };
           appUser.userName = response.data.Username;
           appUser.userGuid = response.data.GUID;
           appUser.auth = true;
@@ -61,29 +60,29 @@ const fusionLogin: React.FC<FusionLoginProps> = (
   return (
     <Paper
       sx={{
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
+        margin: '0 auto',
+        display: 'flex',
+        flexDirection: 'column',
         background: theme.palette.grey[800],
         color: theme.palette.common.black,
-        p: "30px",
-        mt: "30px",
-        maxWidth: "450px",
+        p: '30px',
+        mt: '30px',
+        maxWidth: '450px',
       }}
     >
       <Box
         sx={{
           mb: 2,
-          display: "flex",
-          alignItems: "center",
-          alignContent: "center",
+          display: 'flex',
+          alignItems: 'center',
+          alignContent: 'center',
         }}
       >
         <LockOpen
-          sx={{ color: theme.palette.common.white, fontSize: "40px" }}
+          sx={{ color: theme.palette.common.white, fontSize: '40px' }}
         ></LockOpen>
         <Typography
-          variant="h5"
+          variant='h5'
           sx={{ color: theme.palette.common.white, ml: 1 }}
         >
           FUSION user switcher
@@ -91,17 +90,17 @@ const fusionLogin: React.FC<FusionLoginProps> = (
       </Box>
       <Box sx={{ mb: 6 }}>
         <TextField
-          variant="standard"
+          variant='standard'
           value={loginUserName}
           onChange={(e) => setLoginUserName(e.currentTarget.value)}
-          label="enter your fusion user name"
+          label='enter your fusion user name'
           fullWidth
         ></TextField>
       </Box>
-      <Box sx={{ textAlign: "right" }}>
+      <Box sx={{ textAlign: 'right' }}>
         <Button
           startIcon={<LockOpen />}
-          variant="contained"
+          variant='contained'
           fullWidth
           onClick={() => searchForUser()}
         >

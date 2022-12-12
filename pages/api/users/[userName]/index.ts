@@ -3,8 +3,8 @@ import _ from 'lodash'
 import { NextApiRequest, NextApiResponse } from 'next'
 
 import HandleAxiosErrorResponse from '../../../../lib/errorLib'
-import { auth, PodUserAccount } from '../../../../lib/libsData'
 import ScimLibrary from '../../../../lib/scimLib'
+import { auth, PodUserAccount } from '../../../../ui/lib/libsData'
 
 export default async function handler(
   req: NextApiRequest,
@@ -16,7 +16,7 @@ export default async function handler(
     const { userName } = req.query;
     if (_.isNil(userName))
       throw new Error(
-        "The user name cannot be null or empty to search for a user account"
+        'The user name cannot be null or empty to search for a user account'
       );
 
     const response = await ScimLibrary.fusion.roles.getPodUser(userName);

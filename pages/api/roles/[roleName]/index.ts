@@ -2,11 +2,11 @@ import axios from 'axios'
 import _ from 'lodash'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-import HandleAxiosErrorResponse from '../../../../lib/errorLib'
-import { auth, PodUserAccount } from '../../../../lib/libsData'
-import ScimLibrary from '../../../../lib/scimLib'
+import HandleAxiosErrorResponse from '../../../../ui/lib/errorLib'
+import { auth, PodUserAccount } from '../../../../ui/lib/libsData'
+import ScimLibrary from '../../../../ui/lib/scimLib'
 
-const ROLE_NAME = "Employee";
+const ROLE_NAME = 'Employee';
 
 /**
  * This method handles saving a user's roles and giving them only the requested roles
@@ -20,7 +20,7 @@ export default async function handler(
   res: NextApiResponse<PodUserAccount | undefined | unknown>
 ) {
   try {
-    if (req.method !== "POST")
+    if (req.method !== 'POST')
       throw new Error(
         `The method ${req.method} is not supported by this endpoint.  Please user POST`
       );
@@ -29,7 +29,7 @@ export default async function handler(
     const { roleTemplate, userName, userId, storeMyRoles } = req.body;
     if (_.isNil(roleTemplate) || _.isEmpty(roleTemplate)) {
       throw new Error(
-        "The body of the request must contain a roleTemplate.  A role template is an agreed upon role or set of roles a user can request for thier account"
+        'The body of the request must contain a roleTemplate.  A role template is an agreed upon role or set of roles a user can request for thier account'
       );
     }
     if (_.isNil(userName) || _.isEmpty(userName)) {

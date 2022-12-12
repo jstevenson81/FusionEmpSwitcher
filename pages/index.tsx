@@ -22,30 +22,24 @@ import axios, { AxiosResponse } from 'axios'
 import _ from 'lodash'
 import React, { ChangeEvent, useEffect, useState } from 'react'
 
-import FusionLogin from '../components/fusionLogin'
+import FusionLogin from '../'
 import Loader from '../components/loading'
 import LoggedInUser from '../components/loggedInUser'
 import UpdateUserNotif from '../components/updateUserNotif'
-import { PodUserAccount, PodWorker } from '../lib/libsData'
-
-export type AppUser = {
-  userName: string;
-  userGuid: string;
-  auth: boolean;
-};
+import { PodUserAccount, PodWorker } from '../ui/lib/libsData'
 
 export default function Home() {
   const [workers, setWorkers] = useState<PodWorker[]>([]);
   const [workerContext, setWorkerContext] = useState<PodWorker | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [userContext, setUserContext] = useState<PodUserAccount | null>(null);
-  const [userNotFoundMsg, setUserNotFoundMsg] = useState<string>("");
+  const [userNotFoundMsg, setUserNotFoundMsg] = useState<string>('');
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [tiedUser, setTiedUser] = useState<PodUserAccount | null>(null);
 
   const getWorkers = () => {
     axios
-      .get("api/workers")
+      .get('api/workers')
       .then((response: AxiosResponse<PodWorker[]>) => {
         setWorkers(response.data);
       })
@@ -59,15 +53,15 @@ export default function Home() {
 
   const searchForUser = (userName: string) => {
     setLoading(true);
-    setUserNotFoundMsg("");
+    setUserNotFoundMsg('');
     if (_.isEmpty(userName) || _.isNil(userName)) {
-      setUserNotFoundMsg("Please enter a user account before searching");
+      setUserNotFoundMsg('Please enter a user account before searching');
       setLoading(false);
       return;
     }
-    if (!userName.endsWith("_ex")) {
+    if (!userName.endsWith('_ex')) {
       setUserNotFoundMsg(
-        "You cannot search for a user account for a non-consultant user"
+        'You cannot search for a user account for a non-consultant user'
       );
       setLoading(false);
       return;
@@ -88,9 +82,9 @@ export default function Home() {
   const tieUserAndEmp = async (): Promise<void> => {
     try {
       setTiedUser(null);
-      setUserNotFoundMsg("");
+      setUserNotFoundMsg('');
       setLoading(true);
-      const response = await axios.post("api/users", {
+      const response = await axios.post('api/users', {
         userGuid: userContext?.GUID,
         workerPersId: workerContext?.PersonId,
       });
@@ -113,9 +107,9 @@ export default function Home() {
         <>
           <Box
             sx={{
-              display: "flex",
-              alignContent: "flex-end",
-              justifyContent: "right",
+              display: 'flex',
+              alignContent: 'flex-end',
+              justifyContent: 'right',
             }}
           >
             <LoggedInUser
@@ -127,7 +121,7 @@ export default function Home() {
           <Grid container spacing={4}>
             {tiedUser && (
               <UpdateUserNotif
-                message=""
+                message=''
                 notifEmp={workerContext!}
                 notifUser={userContext!}
                 onClose={() => setTiedUser(null)}
@@ -138,35 +132,35 @@ export default function Home() {
               xs={12}
               md={4}
               sx={{
-                borderRight: { md: "solid 2px #666666" },
+                borderRight: { md: 'solid 2px #666666' },
                 pr: { md: 4 },
                 pb: { md: 6 },
               }}
             >
               <Typography
-                variant="h6"
-                sx={{ mb: 4, textTransform: "uppercase" }}
+                variant='h6'
+                sx={{ mb: 4, textTransform: 'uppercase' }}
               >
                 Employee Selector
               </Typography>
               <Box sx={{ mb: 4 }}>
                 <TextField
                   disabled
-                  sx={{ width: "100%" }}
-                  variant="outlined"
+                  sx={{ width: '100%' }}
+                  variant='outlined'
                   value={appUser.userName}
-                  label="Your User Name"
+                  label='Your User Name'
                 />
               </Box>
               <Box>
                 <Autocomplete
                   disablePortal
-                  id="combo-box-demo"
+                  id='combo-box-demo'
                   options={workers}
                   isOptionEqualToValue={(option: PodWorker, value: PodWorker) =>
                     option.PersonId === value.PersonId
                   }
-                  sx={{ width: "100%" }}
+                  sx={{ width: '100%' }}
                   getOptionLabel={(option: PodWorker) => {
                     return `${option.names[0].DisplayName} - ${option.PersonNumber}`;
                   }}
@@ -174,7 +168,7 @@ export default function Home() {
                     setWorkerContext(newValue);
                   }}
                   renderInput={(params) => (
-                    <TextField {...params} label="Select an Employee" />
+                    <TextField {...params} label='Select an Employee' />
                   )}
                 />
               </Box>
@@ -183,8 +177,8 @@ export default function Home() {
               {userContext && (
                 <>
                   <Typography
-                    variant="h6"
-                    sx={{ mb: 4, mt: { sm: 4 }, textTransform: "uppercase" }}
+                    variant='h6'
+                    sx={{ mb: 4, mt: { sm: 4 }, textTransform: 'uppercase' }}
                   >
                     Selected Employee and User
                   </Typography>
@@ -193,11 +187,11 @@ export default function Home() {
                       container
                       spacing={0}
                       sx={{
-                        alignContent: "center",
-                        alignItems: "center",
+                        alignContent: 'center',
+                        alignItems: 'center',
                       }}
                     >
-                      <Grid item xs={3} sx={{ textAlign: "center" }}>
+                      <Grid item xs={3} sx={{ textAlign: 'center' }}>
                         <Person sx={{ fontSize: 150 }} />
                       </Grid>
                       <Grid item xs={8}>
@@ -232,11 +226,11 @@ export default function Home() {
                     container
                     spacing={0}
                     sx={{
-                      alignContent: "center",
-                      alignItems: "top",
+                      alignContent: 'center',
+                      alignItems: 'top',
                     }}
                   >
-                    <Grid item xs={3} sx={{ textAlign: "center" }}>
+                    <Grid item xs={3} sx={{ textAlign: 'center' }}>
                       <Person2
                         sx={{
                           fontSize: 150,
@@ -262,7 +256,7 @@ export default function Home() {
                               <TableRow>
                                 <TableCell
                                   colSpan={2}
-                                  align="right"
+                                  align='right'
                                   sx={{ border: 0 }}
                                 ></TableCell>
                               </TableRow>
@@ -277,13 +271,13 @@ export default function Home() {
                               <TableRow>
                                 <TableCell
                                   sx={{
-                                    textAlign: "right",
-                                    border: "none",
+                                    textAlign: 'right',
+                                    border: 'none',
                                     pr: 0,
                                   }}
                                 >
                                   <Button
-                                    variant="contained"
+                                    variant='contained'
                                     onClick={() => tieUserAndEmp()}
                                   >
                                     Tie Worker and User
@@ -315,17 +309,17 @@ export default function Home() {
       )}
 
       <Snackbar
-        open={userNotFoundMsg != ""}
+        open={userNotFoundMsg != ''}
         autoHideDuration={6000}
         onClick={(event: React.SyntheticEvent | Event, reason?: string) => {
-          if (reason === "clickaway") return;
-          setUserNotFoundMsg("");
+          if (reason === 'clickaway') return;
+          setUserNotFoundMsg('');
         }}
       >
         <Alert
-          onClose={() => setUserNotFoundMsg("")}
-          severity="error"
-          sx={{ width: "100%" }}
+          onClose={() => setUserNotFoundMsg('')}
+          severity='error'
+          sx={{ width: '100%' }}
         >
           {userNotFoundMsg}
         </Alert>

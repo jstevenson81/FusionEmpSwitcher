@@ -3,14 +3,14 @@ import { NextApiRequest, NextApiResponse } from 'next'
 
 import HandleAxiosErrorResponse from '../../../lib/errorLib'
 import ScimLibrary from '../../../lib/scimLib'
-import { PodUserAccount } from './../../../lib/libsData'
+import { PodUserAccount } from '../../../ui/lib/libsData'
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<PodUserAccount | undefined | unknown>
 ) {
   try {
-    if (req.method !== "POST")
+    if (req.method !== 'POST')
       throw new Error(
         `${req.method} is not supported for this endpoint.  Please use a post`
       );

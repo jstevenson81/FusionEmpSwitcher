@@ -29,12 +29,18 @@ export type PodUserAccount = {
   SuspendedFlag: boolean;
 };
 
+export type AppUser = {
+  userName: string;
+  userGuid: string;
+  auth: boolean;
+};
+
 export const auth = {
-  userName: "svc_sec_audit",
-  password: "C%KKKia9L*G@1gXxoxLlA%yk7*nX0p",
-  podUrl: "https://ewij-dev1.fa.us8.oraclecloud.com",
+  userName: 'svc_sec_audit',
+  password: 'C%KKKia9L*G@1gXxoxLlA%yk7*nX0p',
+  podUrl: 'https://ewij-dev1.fa.us8.oraclecloud.com',
   ordsUrl:
-    "https://g6b2527b56da518-queryfinitedev.adb.us-ashburn-1.oraclecloudapps.com/ords/admin",
+    'https://g6b2527b56da518-queryfinitedev.adb.us-ashburn-1.oraclecloudapps.com/ords/admin',
 };
 
 export const actions = {
@@ -50,9 +56,9 @@ export const actions = {
 
 export const filters = {
   workersName:
-    "?onlyData=true&fields=PersonNumber,PersonId;names:DisplayName&limit=500",
+    '?onlyData=true&fields=PersonNumber,PersonId;names:DisplayName&limit=500',
   userAccountName:
-    "?onlyData=true&fields=PersonId,PersonNumber,UserId,Username,GUID&limit=500",
+    '?onlyData=true&fields=PersonId,PersonNumber,UserId,Username,GUID&limit=500',
 };
 
 export const setUserAccountNameFilter = (

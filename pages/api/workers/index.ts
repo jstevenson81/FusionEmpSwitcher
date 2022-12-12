@@ -2,9 +2,9 @@ import axios from 'axios'
 import _ from 'lodash'
 
 import HandleAxiosErrorResponse from '../../../lib/errorLib'
-import { actions, auth, filters, OracleResponse } from '../../../lib/libsData'
+import { actions, auth, filters, OracleResponse } from '../../../ui/lib/libsData'
 
-import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiRequest, NextApiResponse } from 'next';
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Worker[]>
