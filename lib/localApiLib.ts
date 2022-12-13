@@ -18,6 +18,16 @@ export default class LocalApiLib {
   }
 
   async searchUser(userName: string): Promise<fusionUserAccount> {
+    if (_.isEmpty(userName) || _.isNil(userName)) {
+      throw new Error('Please enter a user account before searching');
+    }
+    if (!userName.endsWith('_ex')) {
+      setUserNotFoundMsg(
+        'You cannot search for a user account for a non-consultant user'
+      );
+      setLoading(false);
+      return;
+    }
     const response = await axios.get<fusionUserAccount>(
       `api/users/${userName}`
     );

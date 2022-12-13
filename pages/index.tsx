@@ -19,7 +19,6 @@ import {
 } from '@mui/material'
 import { color } from '@mui/system'
 import axios, { AxiosResponse } from 'axios'
-import _ from 'lodash'
 import React, { ChangeEvent, useEffect, useState } from 'react'
 
 import FusionLogin from '../components/fusionLogin'
@@ -59,18 +58,7 @@ export default function Home() {
   const searchForUser = (userName: string) => {
     setLoading(true);
     setUserNotFoundMsg('');
-    if (_.isEmpty(userName) || _.isNil(userName)) {
-      setUserNotFoundMsg('Please enter a user account before searching');
-      setLoading(false);
-      return;
-    }
-    if (!userName.endsWith('_ex')) {
-      setUserNotFoundMsg(
-        'You cannot search for a user account for a non-consultant user'
-      );
-      setLoading(false);
-      return;
-    }
+
     localApi
       .searchUser(userName)
       .then((response: fusionUserAccount) => setUserContext(response))
