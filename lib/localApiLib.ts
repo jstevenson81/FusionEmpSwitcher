@@ -2,8 +2,8 @@ import axios, { AxiosResponse } from 'axios'
 import _ from 'lodash'
 import { cache } from 'react'
 
-import { fusionUserAccount } from './fusion/restEntities/fusionUserAccount'
-import { fusionWorker } from './fusion/restEntities/fusionWorker'
+import { fusionUserAccount } from './types/fusion/restEntities/fusionUserAccount'
+import { fusionWorker } from './types/fusion/restEntities/fusionWorker'
 
 export default class LocalApiLib {
   constructor() {}

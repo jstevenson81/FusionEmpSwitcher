@@ -26,13 +26,16 @@ import FusionLogin from '../components/fusionLogin'
 import Loader from '../components/loading'
 import LoggedInUser from '../components/loggedInUser'
 import UpdateUserNotif from '../components/updateUserNotif'
+import LocalApiLib from '../lib/localApiLib'
 import { PodWorker } from '../lib/PodWorker'
 import { appUser } from '../lib/types/app/appUser'
 import { fusionUserAccount } from '../lib/types/fusion/restEntities/fusionUserAccount'
+import { fusionWorker } from '../lib/types/fusion/restEntities/fusionWorker'
 
 export default function Home() {
-  const [workers, setWorkers] = useState<PodWorker[]>([]);
-  const [workerContext, setWorkerContext] = useState<PodWorker | null>(null);
+  const localApi = new LocalApiLib();
+  const [workers, setWorkers] = useState<fusionWorker[]>([]);
+  const [workerContext, setWorkerContext] = useState<fusionWorker | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [userContext, setUserContext] = useState<fusionUserAccount | null>(
     null
@@ -42,11 +45,9 @@ export default function Home() {
   const [tiedUser, setTiedUser] = useState<fusionUserAccount | null>(null);
 
   const getWorkers = () => {
-    axios
-      .get('api/workers')
-      .then((response: AxiosResponse<PodWorker[]>) => {
-        setWorkers(response.data);
-      })
+    localApi
+      .getWorkers()
+      .then((response: fusionWorker[]) => setWorkers(response))
       .catch((response: AxiosResponse<any>) => console.log(response))
       .finally(() => setLoading(false));
   };
@@ -70,16 +71,14 @@ export default function Home() {
       setLoading(false);
       return;
     }
-    axios
-      .get(`api/users/${userName}`)
-      .then((response: AxiosResponse<fusionUserAccount>) => {
-        if (_.isNil(response.data.GUID))
-          setUserNotFoundMsg(
-            `A user with the user name of ${userName} was not found.`
-          );
-        else setUserContext(response.data);
-      })
-      .catch((response: AxiosResponse<any>) => console.log(response))
+    localApi
+      .searchUser(userName)
+      .then((response: fusionUserAccount) => setUserContext(response))
+      .catch((err: any) =>
+        setUserNotFoundMsg(
+          `A user with the user name of ${userName} was not found.`
+        )
+      )
       .finally(() => setLoading(false));
   };
 
