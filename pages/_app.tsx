@@ -1,36 +1,28 @@
-import "@fontsource/roboto/300.css";
-import "@fontsource/roboto/400.css";
-import "@fontsource/roboto/500.css";
-import "@fontsource/roboto/700.css";
+import '@fontsource/roboto/300.css'
+import '@fontsource/roboto/400.css'
+import '@fontsource/roboto/500.css'
+import '@fontsource/roboto/700.css'
 
-import {
-  Box,
-  createTheme,
-  CssBaseline,
-  Paper,
-  ThemeProvider,
-  Typography,
-} from "@mui/material";
+import { Box, createTheme, CssBaseline, Paper, ThemeProvider, Typography } from '@mui/material'
 
-import type { AppProps } from "next/app";
-
-export default function App({ Component, pageProps }: AppProps) {
+import type { AppProps } from 'next/app';
+const App = ({ Component, pageProps }: AppProps) => {
   const theme = createTheme({
     palette: {
-      mode: "dark",
+      mode: 'dark',
     },
   });
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
 
-      <Box sx={{ bgcolor: "#455464", width: "100%", p: 4, mb: 4 }}>
+      <Box sx={{ bgcolor: '#455464', width: '100%', p: 4, mb: 4 }}>
         <Typography
-          variant="h5"
+          variant='h5'
           sx={{
-            color: "#ffffff",
-            fontWeight: "bold",
-            textTransform: "uppercase",
+            color: '#ffffff',
+            fontWeight: 'bold',
+            textTransform: 'uppercase',
           }}
         >
           Fusion User Context Switcher
@@ -41,4 +33,6 @@ export default function App({ Component, pageProps }: AppProps) {
       </Paper>
     </ThemeProvider>
   );
-}
+};
+
+export default App;
