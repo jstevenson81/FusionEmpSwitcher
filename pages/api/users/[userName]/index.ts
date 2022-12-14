@@ -2,11 +2,11 @@ import axios from 'axios'
 import _ from 'lodash'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-import { actions, auth, OracleResponse, setUserAccountNameFilter, UserAccount } from '../../../../lib/libsData'
+import { actions, auth, fusionUserAccount, OracleResponse, setUserAccountNameFilter } from '../../../../lib/libsData'
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<UserAccount | undefined | unknown>
+  res: NextApiResponse<fusionUserAccount | undefined | unknown>
 ) {
   axios.defaults.auth = { username: auth.userName, password: auth.password };
 
@@ -14,12 +14,12 @@ export default async function handler(
     const { userName } = req.query;
     if (_.isNil(userName))
       throw new Error(
-        "The user name cannot be null or empty to search for a user account"
+        'The user name cannot be null or empty to search for a user account'
       );
 
     const filter = setUserAccountNameFilter(userName as string);
 
-    let userAccountResp = await axios.get<OracleResponse<UserAccount>>(
+    let userAccountResp = await axios.get<OracleResponse<fusionUserAccount>>(
       `${actions.userAccounts}${filter}`
     );
     res.status(200).json(_.first(userAccountResp.data.items));

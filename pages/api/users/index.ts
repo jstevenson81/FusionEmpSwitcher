@@ -2,16 +2,16 @@ import axios, { AxiosError } from 'axios'
 import _ from 'lodash'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-import { actions, auth, OracleResponse, UserAccount } from './../../../lib/libsData'
+import { fusionUserAccount } from './../../../lib/libsData'
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<UserAccount | undefined | unknown>
+  res: NextApiResponse<fusionUserAccount | undefined | unknown>
 ) {
   axios.defaults.auth = { username: auth.userName, password: auth.password };
 
   try {
-    if (req.method !== "POST")
+    if (req.method !== 'POST')
       throw new Error(
         `${req.method} is not supported for this endpoint.  Please use a post`
       );
@@ -21,7 +21,7 @@ export default async function handler(
         'The request body must look like the following {"userGuid": string, "personId", number}'
       );
 
-    const userCheck = await axios.get<UserAccount>(
+    const userCheck = await axios.get<fusionUserAccount>(
       `${actions.userAccounts}/${userGuid}?onlyData=true`
     );
     if (_.isNil(userCheck.data.GUID) || userCheck.data.GUID !== userGuid)
@@ -35,9 +35,9 @@ export default async function handler(
       throw new Error(`The person with id ${workerPersId} was not found`);
     }
 
-    const targetPersUserResp = await axios.get<OracleResponse<UserAccount>>(
-      `${actions.userAccounts}/?onlyData=true&q=PersonId=${workerPersId}`
-    );
+    const targetPersUserResp = await axios.get<
+      OracleResponse<fusionUserAccount>
+    >(`${actions.userAccounts}/?onlyData=true&q=PersonId=${workerPersId}`);
 
     const targetUser = userCheck.data;
     const targetPerUsrAcct =
@@ -56,7 +56,7 @@ export default async function handler(
       });
     }
     // set the person record to the user account of the current user
-    await axios.patch<UserAccount>(
+    await axios.patch<fusionUserAccount>(
       `${actions.userAccounts}/${targetUser.GUID}`,
       {
         PersonId: workerPersId,
@@ -65,7 +65,7 @@ export default async function handler(
 
     // set the suspended flag of the user we just added this account to
     // as not suspenede
-    const userResponse = await axios.patch<UserAccount>(
+    const userResponse = await axios.patch<fusionUserAccount>(
       `${actions.userAccounts}/${targetUser.GUID}`,
       {
         SuspendedFlag: false,
