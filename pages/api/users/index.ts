@@ -2,13 +2,13 @@ import axios, { AxiosError } from 'axios'
 import _ from 'lodash'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-import { fusionUserAccount } from './../../../lib/libsData'
+import libs, { fusionUserAccount, oracleResponse } from '../../../lib/libsData'
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<fusionUserAccount | undefined | unknown>
 ) {
-  axios.defaults.auth = { username: auth.userName, password: auth.password };
+  libs.methods.setAxiosDefaults();
 
   try {
     if (req.method !== 'POST')
@@ -22,13 +22,13 @@ export default async function handler(
       );
 
     const userCheck = await axios.get<fusionUserAccount>(
-      `${actions.userAccounts}/${userGuid}?onlyData=true`
+      `${libs.constants.actions.userAccounts}/${userGuid}?onlyData=true`
     );
     if (_.isNil(userCheck.data.GUID) || userCheck.data.GUID !== userGuid)
       throw new Error(`The user account GUID ${userGuid} was not found`);
 
-    const personCheck = await axios.get<OracleResponse<Worker>>(
-      `${actions.workers}/?onlyData=true&q=PersonId=${workerPersId}&fields=PersonId,PersonNumber`
+    const personCheck = await axios.get<oracleResponse<Worker>>(
+      `${libs.constants.actions.workers}/?onlyData=true&q=PersonId=${workerPersId}&fields=PersonId,PersonNumber`
     );
 
     if (_.isEmpty(personCheck.data.items)) {
@@ -36,8 +36,10 @@ export default async function handler(
     }
 
     const targetPersUserResp = await axios.get<
-      OracleResponse<fusionUserAccount>
-    >(`${actions.userAccounts}/?onlyData=true&q=PersonId=${workerPersId}`);
+      oracleResponse<fusionUserAccount>
+    >(
+      `${libs.constants.actions.userAccounts}/?onlyData=true&q=PersonId=${workerPersId}`
+    );
 
     const targetUser = userCheck.data;
     const targetPerUsrAcct =
@@ -46,18 +48,24 @@ export default async function handler(
         : null;
 
     // set both account to have no person record
-    await axios.patch(`${actions.userAccounts}/${targetUser.GUID}`, {
-      PersonId: null,
-    });
+    await axios.patch(
+      `${libs.constants.actions.userAccounts}/${targetUser.GUID}`,
+      {
+        PersonId: null,
+      }
+    );
     // only set this one to null if it isn't already null
     if (!_.isNil(targetPerUsrAcct)) {
-      await axios.patch(`${actions.userAccounts}/${targetPerUsrAcct.GUID}`, {
-        PersonId: null,
-      });
+      await axios.patch(
+        `${libs.constants.actions.userAccounts}/${targetPerUsrAcct.GUID}`,
+        {
+          PersonId: null,
+        }
+      );
     }
     // set the person record to the user account of the current user
     await axios.patch<fusionUserAccount>(
-      `${actions.userAccounts}/${targetUser.GUID}`,
+      `${libs.constants.actions.userAccounts}/${targetUser.GUID}`,
       {
         PersonId: workerPersId,
       }
@@ -66,7 +74,7 @@ export default async function handler(
     // set the suspended flag of the user we just added this account to
     // as not suspenede
     const userResponse = await axios.patch<fusionUserAccount>(
-      `${actions.userAccounts}/${targetUser.GUID}`,
+      `${libs.constants.actions.userAccounts}/${targetUser.GUID}`,
       {
         SuspendedFlag: false,
       }

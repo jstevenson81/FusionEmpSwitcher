@@ -27,7 +27,7 @@ import axios, { AxiosResponse } from 'axios'
 import _ from 'lodash'
 import React, { ChangeEvent, useEffect, useState } from 'react'
 
-import { fusionUserAccount, fusionWorker } from '../lib/libsData'
+import libs, { fusionUserAccount, fusionWorker } from '../lib/libsData'
 
 export type AppUser = {
   userName: string;
@@ -81,22 +81,21 @@ export default function Home() {
       setLoading(false);
       return;
     }
-    axios
-      .get(`api/users/${userNameSearch}`)
-      .then((response: AxiosResponse<fusionUserAccount>) => {
-        if (_.isNil(response.data.GUID))
-          setUserNotFoundMsg(
-            `A user with the user name of ${userNameSearch} was not found.`
-          );
-        else if (isLogin) {
+
+    libs.methods.localApi
+      .runUserNameSearch(userNameSearch)
+      .then((response: fusionUserAccount) => {
+        if (isLogin) {
           let appUser: AppUser = { userName: '', userGuid: '', auth: false };
-          appUser.userName = response.data.Username;
-          appUser.userGuid = response.data.GUID;
+          appUser.userName = response.Username;
+          appUser.userGuid = response.GUID;
           appUser.auth = true;
           setAppUser(appUser);
-          setSelUser(response.data);
-          setSearchUser(response.data.Username);
-        } else setSelUser(response.data);
+          setSelUser(response);
+          setSearchUser(response.Username);
+        } else {
+          setSelUser(response);
+        }
       })
       .catch((response: AxiosResponse<any>) => console.log(response))
       .finally(() => setLoading(false));
@@ -107,11 +106,11 @@ export default function Home() {
       setTiedUser(null);
       setUserNotFoundMsg('');
       setLoading(true);
-      const response = await axios.post('api/users', {
+      const tieResponse = await libs.methods.localApi.tieUserAndEmp({
         userGuid: selUser?.GUID,
-        workerPersId: selWorker?.PersonId,
+        workerPersonId: selWorker?.PersonId,
       });
-      setTiedUser(response.data);
+      setTiedUser(tieResponse);
     } catch (e) {
       setUserNotFoundMsg(JSON.stringify(e));
     } finally {
@@ -358,7 +357,7 @@ export default function Home() {
               startIcon={<LockOpen />}
               variant='contained'
               fullWidth
-              onClick={() => searchForUser(true)}
+              onClick={() => login()}
             >
               Login
             </Button>
