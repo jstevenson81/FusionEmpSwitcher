@@ -2,7 +2,8 @@ import axios from 'axios'
 import _ from 'lodash'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-import { actions, auth, fusionUserAccount, OracleResponse, setUserAccountNameFilter } from '../../../../lib/libsData'
+import { actions, auth, fusionUserAccount, setUserAccountNameFilter } from '../../../../lib/AppLib'
+import { OracleResponse } from '../../../../lib/OracleResponse'
 
 export default async function handler(
   req: NextApiRequest,

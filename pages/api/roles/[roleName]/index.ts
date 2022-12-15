@@ -1,7 +1,8 @@
 import axios from 'axios'
 import _ from 'lodash'
 import { NextApiRequest, NextApiResponse } from 'next'
-import { fusionUserAccount, auth } from '../../../../lib/libsData';
+
+import { auth, fusionUserAccount } from '../../../../lib/AppLib'
 
 /**
  * This method handles saving a user's roles and giving them only the requested roles

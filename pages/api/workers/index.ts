@@ -1,10 +1,11 @@
-// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import axios from 'axios'
 import _ from 'lodash'
 
-import { actions, auth, filters, OracleResponse } from '../../../lib/libsData'
+import { actions, auth, filters } from '../../../lib/AppLib'
+import { OracleResponse } from '../../../lib/OracleResponse'
 
-import type { NextApiRequest, NextApiResponse } from "next";
+// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
+import type { NextApiRequest, NextApiResponse } from 'next';
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Worker[]>
