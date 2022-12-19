@@ -4,13 +4,18 @@ import _ from 'lodash'
 import path from 'path'
 
 type Environment = 'dev' | 'test' | 'prod' | 'ci';
-type configItem = { local: any; remote: any };
+type actions = {
+  local: { users: string; workers: string; roles: string };
+  oracle: { workers: string; userAccounts: string };
+};
+type auth = { oracle: { userName: string; password: string } };
+type urls = { oracle: string; ords: string };
 
 export default class Env {
   // these are the strongly typed properties in each .env file
-  actions: configItem;
-  filters: configItem;
-  auth: configItem;
+  actions: actions;
+  auth: auth;
+  urls: urls;
 
   private dotEnvDefault = '.env';
   private dotEnvTest = '.env.test';
@@ -31,27 +36,22 @@ export default class Env {
         workers: this.getEnvironmentVariable('LOCAL_ACTION_WORKERS'),
         roles: this.getEnvironmentVariable('LOCAL_ACTION_ROLES'),
       },
-      remote: {
+      oracle: {
         workers: this.getEnvironmentVariable('FUSION_ACTION_WORKERS'),
         userAccounts: this.getEnvironmentVariable(
           'FUSION_ACTION_USER_ACCOUNTS'
         ),
       },
     };
-    this.filters = {
-      local: {},
-      remote: {
-        workerName: this.getEnvironmentVariable('FUSION_FILTER_WORKER_NAME'),
-        userAccount: this.getEnvironmentVariable('FUSION_FILTER_USER_ACCOUNT'),
-      },
-    };
     this.auth = {
-      local: {},
-      remote: {
+      oracle: {
         userName: this.getEnvironmentVariable('POD_AUTH_USERNAME'),
         password: this.getEnvironmentVariable('POD_AUTH_PASSWORD'),
-        url: this.getEnvironmentVariable('POD_AUTH_URL'),
       },
+    };
+    this.urls = {
+      oracle: this.getEnvironmentVariable('POD_URL'),
+      ords: this.getEnvironmentVariable('ORDS_URL'),
     };
   }
   init() {

@@ -1,30 +1,25 @@
-import axios from 'axios'
 import _ from 'lodash'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-import { actions, auth, fusionUserAccount, setUserAccountNameFilter } from '../../../../lib/AppLib'
-import { OracleResponse } from '../../../../lib/OracleResponse'
+import AppLib from '../../../../lib/AppLib'
+import FusionUserAccount from '../../../../lib/models/fusion/FusionUserAccount'
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<fusionUserAccount | undefined | unknown>
+  res: NextApiResponse<FusionUserAccount | undefined | unknown>
 ) {
-  axios.defaults.auth = { username: auth.userName, password: auth.password };
-
+  const appLib = new AppLib();
   try {
     const { userName } = req.query;
     if (_.isNil(userName))
       throw new Error(
         'The user name cannot be null or empty to search for a user account'
       );
-
-    const filter = setUserAccountNameFilter(userName as string);
-
-    let userAccountResp = await axios.get<OracleResponse<fusionUserAccount>>(
-      `${actions.userAccounts}${filter}`
+    const userAccountResp = await appLib.getOracleUser(
+      AppLib.getQueryParamValue(userName)
     );
-    res.status(200).json(_.first(userAccountResp.data.items));
+    return res.status(200).json(userAccountResp);
   } catch (e) {
-    res.status(400).json(e);
+    return AppLib.makeAxiosErrorResponse({ e, res });
   }
 }

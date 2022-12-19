@@ -3,14 +3,28 @@ import _ from 'lodash'
 import { NextApiResponse } from 'next'
 
 import Env from './Env'
-import FusionUserAccount from './FusionUserAccount'
+import FusionResponse from './models/fusion/FusionResponse'
+import FusionUserAccount from './models/fusion/FusionUserAccount'
+import FusionUserRole from './models/fusion/FusionUserRole'
+import OrdsRole from './models/ords/OrdsRole'
+import UserRoles from './models/UserRoles'
+
+export type oracleParams = {
+  onlyData: boolean;
+  limit: number;
+  q?: string | null;
+  fields: string | null;
+};
 
 export default class AppLib {
-  public static getQueryParamValue(value: string | string[]): string {
+  //#region static methods
+  public static getQueryParamValue(
+    value: string | string[] | undefined
+  ): string {
+    if (_.isUndefined(value)) return '';
     const firstValue = Array.isArray(value) ? _.first(value) : value;
     return _.isUndefined(firstValue) ? '' : firstValue;
   }
-
   public static makeAxiosErrorResponse({
     e,
     res,
@@ -31,23 +45,55 @@ export default class AppLib {
       },
     });
   }
+  public static getOracleUserNameSearchParams({
+    userName,
+    onlyData,
+  }: {
+    userName: string;
+    onlyData: boolean;
+  }): oracleParams {
+    return {
+      q: `Username eq '${userName}'`,
+      fields: 'PersonId,PersonNumber,UserId,Username,GUID',
+      onlyData,
+      limit: 500,
+    };
+  }
+  public static getOracleWorkerSearchParams(): oracleParams {
+    return {
+      fields: 'PersonNumber,PersonId;names:DisplayName',
+      onlyData: true,
+      limit: 500,
+    };
+  }
+
+  //#endregion
 
   env: Env;
-  axios: AxiosInstance;
+  axiosOracle: AxiosInstance;
+  axiosOrds: AxiosInstance;
   constructor() {
     this.env = new Env();
-    this.axios = axios.create({
-      baseURL: this.env.auth.remote.url,
+    this.axiosOracle = axios.create({
+      baseURL: this.env.urls.oracle,
       auth: {
-        username: this.env.auth.remote.userName,
-        password: this.env.auth.remote.password,
+        username: this.env.auth.oracle.userName,
+        password: this.env.auth.oracle.password,
       },
+    });
+    this.axiosOrds = axios.create({
+      baseURL: this.env.urls.ords,
     });
   }
 
-  public async runUserNameSearch(userName: string): Promise<FusionUserAccount> {
-    const userResp = await this.axios.get<FusionUserAccount>(
-      `${this.env.actions.local.users}/${userName}`
+  public async getOracleUser(userName: string): Promise<FusionUserAccount> {
+    const params = AppLib.getOracleUserNameSearchParams({
+      userName,
+      onlyData: false,
+    });
+    const userResp = await this.axiosOracle.get<FusionUserAccount>(
+      this.env.actions.oracle.userAccounts,
+      { params }
     );
 
     if (_.isNil(userResp.data.GUID)) {
@@ -66,14 +112,51 @@ export default class AppLib {
     userGuid: string | undefined;
     workerPersonId: string | undefined;
   }): Promise<FusionUserAccount> {
-    const response = await this.axios.post<FusionUserAccount>('api/users', {
-      userGuid: userGuid,
-      workerPersId: workerPersonId,
-    });
+    const response = await this.axiosOracle.post<FusionUserAccount>(
+      'api/users',
+      {
+        userGuid: userGuid,
+        workerPersId: workerPersonId,
+      }
+    );
     return response.data;
   }
 
-  public setUserAccountNameFilter(userName: string): string {
-    return `${this.env.filters.remote.userAccountName}&q=Username='${userName}'`;
+  public async getUserRoles(userName: string): Promise<UserRoles> {
+    const oracleUserResp = await this.axiosOracle.get<
+      FusionResponse<FusionUserAccount>
+    >(this.env.actions.oracle.userAccounts, {
+      params: AppLib.getOracleUserNameSearchParams({
+        userName,
+        onlyData: false,
+      }),
+    });
+
+    FusionResponse.validateResponse(oracleUserResp.data, true);
+    const roleLink = FusionUserAccount.getUserAccountLink(
+      oracleUserResp.data.items[0].links
+    );
+    let oraRoleData = new FusionResponse<FusionUserRole>();
+    if (!_.isNil(roleLink)) {
+      const oraRoleResponse = await this.axiosOracle.get<
+        FusionResponse<FusionUserRole>
+      >(roleLink.href);
+      FusionResponse.validateResponse(oraRoleResponse.data, true);
+      oraRoleData = oraRoleResponse.data;
+    }
+    const dbRoleResponse = await this.axiosOrds.get<FusionResponse<OrdsRole>>(
+      '/',
+      { params: { q: `{"user_name":"${userName}}"}` } }
+    );
+    const dbRespValid = FusionResponse.validateResponse(
+      dbRoleResponse.data,
+      false
+    );
+    const userRoles = new UserRoles();
+    userRoles.dbRoles = dbRespValid ? dbRoleResponse.data.items : null;
+    userRoles.fusionRoles = oraRoleData.items;
+    userRoles.userName = userName;
+
+    return userRoles;
   }
 }

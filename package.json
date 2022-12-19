@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "mocha"
   },
   "dependencies": {
     "@emotion/react": "^11.10.5",
@@ -29,8 +30,12 @@
     "typescript": "4.9.3"
   },
   "devDependencies": {
+    "@types/chai": "^4.3.4",
     "@types/dotenv": "^8.2.0",
     "@types/lodash": "^4.14.191",
-    "@types/luxon": "^3.1.0"
+    "@types/luxon": "^3.1.0",
+    "@types/mocha": "^10.0.1",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0"
   }
 }

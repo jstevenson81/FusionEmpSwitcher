@@ -2,7 +2,7 @@ import axios from 'axios'
 import _ from 'lodash'
 
 import { actions, auth, filters } from '../../../lib/AppLib'
-import { OracleResponse } from '../../../lib/OracleResponse'
+import { OracleResponse } from '../../../lib/models/OracleResponse'
 
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next';

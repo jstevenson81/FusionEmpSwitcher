@@ -1,8 +1,8 @@
-import axios from 'axios'
 import _ from 'lodash'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-import { auth, fusionUserAccount } from '../../../../lib/AppLib'
+import AppLib from '../../../../lib/AppLib'
+import FusionUserAccount from '../../../../lib/models/fusion/FusionUserAccount'
 
 /**
  * This method handles saving a user's roles and giving them only the requested roles
@@ -15,14 +15,13 @@ import { auth, fusionUserAccount } from '../../../../lib/AppLib'
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<fusionUserAccount | undefined | unknown>
+  res: NextApiResponse<FusionUserAccount | undefined | unknown>
 ) {
   try {
     if (req.method !== 'POST')
       throw new Error(
         `The method ${req.method} is not supported by this endpoint.  Please user POST`
       );
-    axios.defaults.auth = { username: auth.userName, password: auth.password };
 
     const { roleTemplate, userName, userId, storeMyRoles } = req.body;
     if (_.isNil(roleTemplate) || _.isEmpty(roleTemplate)) {
@@ -46,6 +45,6 @@ export default async function handler(
       );
     }
   } catch (e) {
-    return commonLib.makeAxiosErrorResponse({ e, res });
+    return AppLib.makeAxiosErrorResponse({ e, res });
   }
 }
