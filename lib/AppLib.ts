@@ -60,10 +60,14 @@ export default class AppLib {
             limit: 500,
         };
     }
-    public static getOracleWorkerSearchParams(): oracleParams {
+    public static getOracleWorkerSearchParams({
+        onlyData,
+    }: {
+        onlyData: boolean;
+    }): oracleParams {
         return {
             fields: 'PersonNumber,PersonId;names:DisplayName',
-            onlyData: true,
+            onlyData,
             limit: 500,
         };
     }
@@ -107,19 +111,53 @@ export default class AppLib {
     }
 
     public async tieUserAndEmp({
-        userGuid,
+        targetUserGuid,
         workerPersonId,
     }: {
-        userGuid: string | undefined;
+        targetUserGuid: string | undefined;
         workerPersonId: string | undefined;
     }): Promise<FusionUserAccount> {
-        const response = await this.axiosOracle.post<FusionUserAccount>(
-            'api/users',
-            {
-                userGuid: userGuid,
-                workerPersId: workerPersonId,
-            },
+        // validate the params passed
+        if (_.isNil(targetUserGuid) || _.isNil(workerPersonId))
+            throw new Error(
+                'The request body must look like the following {"userGuid": string, "personId", number}',
+            );
+
+        // make sure we can get the user from the pod
+        const userAccount = await this.getFusionUserByGuid(targetUserGuid);
+        if (
+            _.isNil(userAccount) ||
+            _.isNil(userAccount.GUID) ||
+            userAccount.GUID !== targetUserGuid
+        )
+            throw new Error(
+                `The user account GUID ${targetUserGuid} was not found`,
+            );
+
+        // make sure we can get the worker from the pod
+        const workerRecord = await this.getWorkerByPersonId(workerPersonId);
+        if (_.isEmpty(workerRecord)) {
+            throw new Error(
+                `The person with id ${workerPersonId} was not found`,
+            );
+        }
+
+        // step 1: set the person id of the target user to null
+        await this.axiosOracle.patch(
+            `this.env.actions.oracle.userAccounts/${userAccount.GUID}`,
+            { PersonId: null },
         );
+        // step 2:  set the person id of the target user to the person id of the passed in user
+        await this.axiosOracle.patch(
+            `this.env.actions.oracle.userAccounts/${userAccount.GUID}`,
+            { PersonId: workerRecord.PersonId },
+        );
+        // step 3:  set the suspended flag to false
+        const response = await this.axiosOracle.patch<FusionUserAccount>(
+            `this.env.actions.oracle.userAccounts/${userAccount.GUID}`,
+            { SuspendedFlag: false },
+        );
+        // step 4: return the user account
         return response.data;
     }
 
@@ -144,14 +182,14 @@ export default class AppLib {
     public async getWorkerByPersonId(
         workerPersId: string,
     ): Promise<FusionWorker> {
+        const params = AppLib.getOracleWorkerSearchParams({ onlyData: true });
+        params.q = `PersonId eq ${workerPersId}`;
+
         const response = await this.axiosOracle.get<
             FusionResponse<FusionWorker>
-        >(this.env.actions.oracle.workers, {
-            params: {
-                q: `PersonId eq ${workerPersId}`,
-                fields: 'PersonId,PersonNumber',
-            },
-        });
+        >(this.env.actions.oracle.workers, { params });
+        FusionResponse.validateResponse(response.data, true);
+        return response.data.items[0];
     }
 
     public async getUserRoles(userName: string): Promise<UserRoles> {
