@@ -40,6 +40,7 @@ export default class AppLib {
                 status: axiosError.response?.status,
                 statusText: axiosError.response?.statusText,
                 config: {
+                    baseUrl: axiosError.config?.baseURL,
                     url: axiosError.response?.config.url,
                     passedData: axiosError.response?.config.data,
                 },
@@ -54,7 +55,7 @@ export default class AppLib {
         onlyData: boolean;
     }): oracleParams {
         return {
-            q: `Username eq '${userName}'`,
+            q: `Username='${userName}'`,
             fields: 'PersonId,PersonNumber,UserId,Username,GUID',
             onlyData,
             limit: 500,
@@ -193,6 +194,7 @@ export default class AppLib {
     }
 
     public async getUserRoles(userName: string): Promise<UserRoles> {
+        console.log(userName);
         const oracleUserResp = await this.axiosOracle.get<
             FusionResponse<FusionUserAccount>
         >(this.env.actions.oracle.userAccounts, {
@@ -210,7 +212,7 @@ export default class AppLib {
         if (!_.isNil(roleLink)) {
             const oraRoleResponse = await this.axiosOracle.get<
                 FusionResponse<FusionUserRole>
-            >(roleLink.href);
+            >(`${roleLink.href}?onlyData=true&fields=RoleId,RoleCode`);
             FusionResponse.validateResponse(oraRoleResponse.data, true);
             oraRoleData = oraRoleResponse.data;
         }
