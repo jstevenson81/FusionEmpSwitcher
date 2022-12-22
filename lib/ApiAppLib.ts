@@ -17,7 +17,7 @@ export type oracleParams = {
     fields: string | null;
 };
 
-export default class AppLib {
+export default class ApiAppLib {
     //#region static methods
     public static getQueryParamValue(
         value: string | string[] | undefined,
@@ -93,7 +93,7 @@ export default class AppLib {
     }
 
     public async getOracleUser(userName: string): Promise<FusionUserAccount> {
-        const params = AppLib.getOracleUserNameSearchParams({
+        const params = ApiAppLib.getOracleUserNameSearchParams({
             userName,
             onlyData: false,
         });
@@ -121,7 +121,7 @@ export default class AppLib {
         // validate the params passed
         if (_.isNil(targetUserGuid) || _.isNil(workerPersonId))
             throw new Error(
-                'The request body must look like the following {"userGuid": string, "personId", number}',
+                'The request body must have a targetUserGuid and workerPersonId property to call this method.',
             );
 
         // make sure we can get the user from the pod
@@ -183,7 +183,9 @@ export default class AppLib {
     public async getWorkerByPersonId(
         workerPersId: string,
     ): Promise<FusionWorker> {
-        const params = AppLib.getOracleWorkerSearchParams({ onlyData: true });
+        const params = ApiAppLib.getOracleWorkerSearchParams({
+            onlyData: true,
+        });
         params.q = `PersonId eq ${workerPersId}`;
 
         const response = await this.axiosOracle.get<
@@ -198,7 +200,7 @@ export default class AppLib {
         const oracleUserResp = await this.axiosOracle.get<
             FusionResponse<FusionUserAccount>
         >(this.env.actions.oracle.userAccounts, {
-            params: AppLib.getOracleUserNameSearchParams({
+            params: ApiAppLib.getOracleUserNameSearchParams({
                 userName,
                 onlyData: false,
             }),
@@ -218,7 +220,8 @@ export default class AppLib {
         }
         const dbRoleResponse = await this.axiosOrds.get<
             FusionResponse<OrdsRole>
-        >('/', { params: { q: `{"user_name":"${userName}}"}` } });
+        >('/', { params: { q: `{"user_name":"${userName}"}` } });
+
         const dbRespValid = FusionResponse.validateResponse(
             dbRoleResponse.data,
             false,
@@ -229,5 +232,26 @@ export default class AppLib {
         userRoles.userName = userName;
 
         return userRoles;
+    }
+
+    public async getAllWorkers(): Promise<FusionWorker[]> {
+        const workerAction = `${
+            this.env.actions.oracle.workers
+        }${ApiAppLib.getOracleWorkerSearchParams({ onlyData: true })}`;
+        let workerResp = await axios.get<FusionResponse<FusionWorker>>(
+            workerAction,
+        );
+        let offset = 500;
+        let looped = 1;
+        let workers = workerResp.data.items;
+
+        while (workerResp.data.hasMore) {
+            workerResp = await axios.get<FusionResponse<FusionWorker>>(
+                `${workerAction}&offset=${offset * looped}`,
+            );
+            workers = _.concat(workers, workerResp.data.items);
+            looped += 1;
+        }
+        return workers;
     }
 }

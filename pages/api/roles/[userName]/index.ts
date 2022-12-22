@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 
-import AppLib from '../../../../lib/AppLib'
+import ApiAppLib from '../../../../lib/ApiAppLib'
 import FusionUserAccount from '../../../../lib/models/fusion/FusionUserAccount'
 
 /**
@@ -12,20 +12,20 @@ import FusionUserAccount from '../../../../lib/models/fusion/FusionUserAccount'
  * @param {NextApiResponse} res
  */
 export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<FusionUserAccount | undefined | unknown>
+    req: NextApiRequest,
+    res: NextApiResponse<FusionUserAccount | undefined | unknown>,
 ) {
-  const appLib = new AppLib();
-  try {
-    if (req.method !== 'GET')
-      throw new Error(
-        `The method ${req.method} is not supported by this endpoint.  Please use GET`
-      );
-    const { userName } = req.query;
-    const realUserName = AppLib.getQueryParamValue(userName);
-    const roles = await appLib.getUserRoles(realUserName);
-    return res.status(200).json(roles);
-  } catch (e) {
-    return AppLib.makeAxiosErrorResponse({ e, res });
-  }
+    const appLib = new ApiAppLib();
+    try {
+        if (req.method !== 'GET')
+            throw new Error(
+                `The method ${req.method} is not supported by this endpoint.  Please use GET`,
+            );
+        const { userName } = req.query;
+        const realUserName = ApiAppLib.getQueryParamValue(userName);
+        const roles = await appLib.getUserRoles(realUserName);
+        return res.status(200).json(roles);
+    } catch (e) {
+        return ApiAppLib.makeAxiosErrorResponse({ e, res });
+    }
 }

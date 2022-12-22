@@ -1,30 +1,13 @@
-import axios from 'axios'
-import _ from 'lodash'
-
-import { actions, auth, filters } from '../../../lib/AppLib'
-import { OracleResponse } from '../../../lib/models/OracleResponse'
-
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
+import ApiAppLib from '../../../lib/ApiAppLib'
+import FusionWorker from '../../../lib/models/fusion/FusionWorker'
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Worker[]>
+    req: NextApiRequest,
+    res: NextApiResponse<FusionWorker[]>,
 ) {
-  axios.defaults.auth = { username: auth.userName, password: auth.password };
-  const workerAction = `${actions.workers}${filters.workersName}`;
-  let workerResp = await axios.get<OracleResponse<Worker>>(workerAction);
-  let offset = 500;
-  let looped = 1;
-  let workers = workerResp.data.items;
-
-  while (workerResp.data.hasMore) {
-    workerResp = await axios.get<OracleResponse<Worker>>(
-      `${actions.workers}${filters.workersName}&offset=${offset * looped}`
-    );
-
-    workers = _.concat(workers, workerResp.data.items);
-    looped += 1;
-  }
-
-  res.status(200).json(workers);
+    const apiAppLib = new ApiAppLib();
+    const workers = await apiAppLib.getAllWorkers();
+    res.status(200).json(workers);
 }
