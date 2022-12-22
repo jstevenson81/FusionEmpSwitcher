@@ -3,39 +3,34 @@ import Person from '@mui/icons-material/Person'
 import Person2 from '@mui/icons-material/Person2'
 import Search from '@mui/icons-material/Search'
 import {
-  Alert,
-  Autocomplete,
-  Backdrop,
-  Box,
-  Button,
-  CircularProgress,
-  Grid,
-  IconButton,
-  InputAdornment,
-  Paper,
-  Snackbar,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
-  TextField,
-  Typography,
-  useTheme,
+    Alert,
+    Autocomplete,
+    Backdrop,
+    Box,
+    Button,
+    CircularProgress,
+    Grid,
+    IconButton,
+    InputAdornment,
+    Paper,
+    Snackbar,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableRow,
+    TextField,
+    Typography,
+    useTheme,
 } from '@mui/material'
 import axios, { AxiosResponse } from 'axios'
 import _ from 'lodash'
 import React, { ChangeEvent, useEffect, useState } from 'react'
 
+import AppUser from '../lib/models/AppUser'
 import FusionUserAccount from '../lib/models/fusion/FusionUserAccount'
 import FusionWorker from '../lib/models/fusion/FusionWorker'
 import UiAppLib from '../lib/UiAppLib'
-
-export type AppUser = {
-    userName: string;
-    userGuid: string;
-    auth: boolean;
-};
 
 export default function Home() {
     const [workers, setWorkers] = useState<FusionWorker[]>([]);
@@ -45,20 +40,16 @@ export default function Home() {
     const [selUser, setSelUser] = useState<FusionUserAccount | null>(null);
     const [userNotFoundMsg, setUserNotFoundMsg] = useState<string>('');
     const [loginUserName, setLoginUserName] = useState<string>('');
-    const [appUser, setAppUser] = useState<AppUser>({
-        userName: '',
-        userGuid: '',
-        auth: false,
-    });
+    const [appUser, setAppUser] = useState<AppUser>(new AppUser());
     const [tiedUser, setTiedUser] = useState<FusionUserAccount | null>(null);
 
     const appLib = new UiAppLib();
 
     const getWorkers = () => {
-        axios
-            .get('api/workers')
-            .then((response: AxiosResponse<FusionWorker[]>) => {
-                setWorkers(response.data);
+        appLib
+            .callGetWorkers()
+            .then((response: FusionWorker[]) => {
+                setWorkers(response);
             })
             .catch((response: AxiosResponse<any>) => console.log(response))
             .finally(() => setLoading(false));
@@ -87,14 +78,10 @@ export default function Home() {
         }
 
         appLib
-            .searchOracleUser(userNameSearch)
+            .callSearchOracleUser(userNameSearch)
             .then((response: FusionUserAccount) => {
                 if (isLogin) {
-                    let appUser: AppUser = {
-                        userName: '',
-                        userGuid: '',
-                        auth: false,
-                    };
+                    const appUser = new AppUser();
                     appUser.userName = response.Username;
                     appUser.userGuid = response.GUID;
                     appUser.auth = true;
@@ -114,8 +101,8 @@ export default function Home() {
             setTiedUser(null);
             setUserNotFoundMsg('');
             setLoading(true);
-            const tieResponse = await appLib.tieUserAndEmp({
-                userGuid: selUser?.GUID,
+            const tieResponse = await appLib.callTieUserAndEmp({
+                targetUserGuid: selUser?.GUID,
                 workerPersonId: selWorker?.PersonId,
             });
             setTiedUser(tieResponse);
