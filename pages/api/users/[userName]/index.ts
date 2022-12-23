@@ -11,10 +11,11 @@ export default async function handler(
     const appLib = new ApiAppLib();
     try {
         const { userName } = req.query;
-        if (_.isNil(userName))
+        if (_.isNil(userName)) {
             throw new Error(
                 'The user name cannot be null or empty to search for a user account',
             );
+        }
         const userAccountResp = await appLib.getOracleUser(
             ApiAppLib.getQueryParamValue(userName),
         );

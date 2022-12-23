@@ -1,7 +1,8 @@
-import axios, { AxiosError, AxiosInstance } from 'axios'
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios'
 import _ from 'lodash'
 import { NextApiResponse } from 'next'
 
+import CustomError from './CustomError'
 import Env from './Env'
 import FusionResponse from './models/fusion/FusionResponse'
 import FusionUserAccount from './models/fusion/FusionUserAccount'
@@ -33,19 +34,18 @@ export default class ApiAppLib {
         e: any;
         res: NextApiResponse;
     }): void {
-        const axiosError = e as AxiosError;
-        res.status(400).json({
-            error: axiosError.response?.data,
-            response: {
-                status: axiosError.response?.status,
-                statusText: axiosError.response?.statusText,
-                config: {
-                    baseUrl: axiosError.config?.baseURL,
-                    url: axiosError.response?.config.url,
-                    passedData: axiosError.response?.config.data,
-                },
-            },
-        });
+        const customErr = e as CustomError<any>;
+        const axiosErr = e as AxiosError;
+        console.log(customErr);
+        console.log(axiosErr);
+        return axios.isAxiosError(e)
+            ? res.status(400).json(CustomError.CreateFromAxiosError(axiosErr))
+            : res.status(400).json(
+                  CustomError.Create<any>({
+                      config: customErr.httpConfig,
+                      errMsg: customErr.message,
+                  }),
+              );
     }
     public static getOracleUserNameSearchParams({
         userName,
@@ -83,8 +83,8 @@ export default class ApiAppLib {
         this.axiosOracle = axios.create({
             baseURL: this.env.urls.oracle,
             auth: {
-                username: this.env.auth.oracle.userName,
-                password: this.env.auth.oracle.password,
+                username: this.env.auth.oracle.userName!,
+                password: this.env.auth.oracle.password!,
             },
         });
         this.axiosOrds = axios.create({
@@ -97,17 +97,30 @@ export default class ApiAppLib {
             userName,
             onlyData: false,
         });
-        const userResp = await this.axiosOracle.get<FusionUserAccount>(
-            this.env.actions.oracle.userAccounts,
-            { params },
-        );
-
-        if (_.isNil(userResp.data.GUID)) {
-            throw new Error(
-                `A user with the user name of ${userName} was not found.`,
-            );
+        const userReq: AxiosRequestConfig = {
+            url: this.env.actions.oracle.userAccounts,
+            data: { params },
+            method: 'GET',
+        };
+        const userResp = await this.axiosOracle<
+            FusionResponse<FusionUserAccount>
+        >(userReq);
+        if (userResp.data.count > 1) {
+            throw CustomError.Create({
+                errMsg: `Searching for ${userName} returned more than one result`,
+                config: userReq,
+                response: userResp,
+            });
+        }
+        const user = _.first(userResp.data.items);
+        if (_.isNil(user)) {
+            throw CustomError.Create({
+                errMsg: `${userName} was not found`,
+                config: userReq,
+                response: userResp,
+            });
         } else {
-            return userResp.data;
+            return user;
         }
     }
 
@@ -190,16 +203,15 @@ export default class ApiAppLib {
 
         const response = await this.axiosOracle.get<
             FusionResponse<FusionWorker>
-        >(this.env.actions.oracle.workers, { params });
+        >(this.env.actions.oracle.workers!, { params });
         FusionResponse.validateResponse(response.data, true);
         return response.data.items[0];
     }
 
     public async getUserRoles(userName: string): Promise<UserRoles> {
-        console.log(userName);
         const oracleUserResp = await this.axiosOracle.get<
             FusionResponse<FusionUserAccount>
-        >(this.env.actions.oracle.userAccounts, {
+        >(this.env.actions.oracle.userAccounts!, {
             params: ApiAppLib.getOracleUserNameSearchParams({
                 userName,
                 onlyData: false,

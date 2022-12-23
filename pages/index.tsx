@@ -23,7 +23,6 @@ import {
     Typography,
     useTheme,
 } from '@mui/material'
-import axios, { AxiosResponse } from 'axios'
 import _ from 'lodash'
 import React, { ChangeEvent, useEffect, useState } from 'react'
 
@@ -43,7 +42,7 @@ export default function Home() {
     const [appUser, setAppUser] = useState<AppUser>(new AppUser());
     const [tiedUser, setTiedUser] = useState<FusionUserAccount | null>(null);
 
-    const appLib = new UiAppLib();
+    let appLib: UiAppLib;
 
     const getWorkers = () => {
         appLib
@@ -51,11 +50,11 @@ export default function Home() {
             .then((response: FusionWorker[]) => {
                 setWorkers(response);
             })
-            .catch((response: AxiosResponse<any>) => console.log(response))
             .finally(() => setLoading(false));
     };
 
     useEffect(() => {
+        if (_.isNil(appLib)) appLib = new UiAppLib(window);
         getWorkers();
     }, []);
 
@@ -77,6 +76,7 @@ export default function Home() {
             return;
         }
 
+        appLib = new UiAppLib(window);
         appLib
             .callSearchOracleUser(userNameSearch)
             .then((response: FusionUserAccount) => {
@@ -92,7 +92,6 @@ export default function Home() {
                     setSelUser(response);
                 }
             })
-            .catch((response: AxiosResponse<any>) => console.log(response))
             .finally(() => setLoading(false));
     };
 

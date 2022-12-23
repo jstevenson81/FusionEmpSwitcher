@@ -6,8 +6,10 @@ import FusionWorker from './models/fusion/FusionWorker'
 export default class UiAppLib {
     axiosLocalApi: AxiosInstance;
 
-    constructor() {
-        this.axiosLocalApi = axios.create({ baseURL: '/api' });
+    constructor(private browserInstance: Window) {
+        this.axiosLocalApi = axios.create({
+            baseURL: `${this.browserInstance.location.href}/api`,
+        });
     }
 
     async callSearchOracleUser(userName: string): Promise<FusionUserAccount> {
