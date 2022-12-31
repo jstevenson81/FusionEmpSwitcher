@@ -1,86 +1,63 @@
 import { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios'
-import _ from 'lodash'
 
 export interface ICustomErrorProps<T> {
-    httpConfig: {
-        baseURL?: string;
-        url?: string;
-        method?: string;
-        params?: any;
-        data?: any;
-    };
-    response: {
+    axiosError?: AxiosError;
+    httpConfig?: AxiosRequestConfig;
+    response?: {
         status?: number;
         statusText?: string;
         data?: any;
     };
     message: string;
+    stack?: string;
+    name?: string;
 }
 
 export default class CustomError<T> implements ICustomErrorProps<T> {
-    message: string;
-    httpConfig: {
-        url?: string;
-        baseURL?: string;
-        method?: string;
-        params?: any;
-        data?: any;
-    };
-    response: {
-        status?: number | undefined;
+    axiosError?: AxiosError<unknown, any>;
+    response?: {
+        status?: number;
         statusText?: string;
         data?: any;
     };
+    message: string;
+    stack?: string;
+    name?: string;
+    config?: AxiosRequestConfig;
 
-    constructor(message: string) {
+    constructor({
+        message,
+        name,
+        stack,
+    }: {
+        message: string;
+        name?: string;
+        stack?: string;
+    }) {
         this.message = message;
-
-        this.httpConfig = {
-            url: '',
-            baseURL: '',
-            method: '',
-            params: {},
-            data: {},
-        };
-        this.response = { status: 0, statusText: '', data: {} };
+        this.name = name;
+        this.stack = stack;
     }
 
     public static CreateFromAxiosError<T>(err: AxiosError): CustomError<T> {
-        const customError = new CustomError<T>(err.message);
-        customError.httpConfig.baseURL = err.config?.baseURL;
-        customError.httpConfig.url = err.config?.url;
-        customError.httpConfig.data = err.config?.data;
-        customError.httpConfig.method = err.config?.method;
-        customError.httpConfig.params = err.config?.data;
-        customError.response.data = err.response?.data;
-        customError.response.status = err.response?.status;
-        customError.response.statusText = err.response?.statusText;
+        const customError = new CustomError<T>({ ...err });
+        customError.axiosError = err;
+        customError.response = { data: err.response?.data, status: err.status };
         return customError;
     }
 
     public static Create<T>({
         config,
-        errMsg,
+        error,
         response,
     }: {
-        config: AxiosRequestConfig<T>;
-        errMsg: string;
+        config?: AxiosRequestConfig<T>;
+        error: Error;
         response?: AxiosResponse<T>;
     }): CustomError<T> {
-        const customError = new CustomError<T>(errMsg);
-        customError.httpConfig.baseURL = config.baseURL;
-        customError.httpConfig.url = config.url;
-        customError.httpConfig.data = config.data;
-        customError.httpConfig.method = config.method;
-        customError.httpConfig.params = config.params;
-
-        if (!_.isNil(response)) {
-            customError.response.data = response.data;
-            customError.response.status = response.status;
-            customError.response.statusText = response.statusText;
-        } else {
-            customError.response = {};
-        }
+        const customError = new CustomError<T>({ ...error });
+        customError.config = config;
+        customError.response = { ...response };
         return customError;
     }
 }

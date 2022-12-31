@@ -16,6 +16,7 @@ export default async function handler(
     res: NextApiResponse<FusionUserAccount | undefined | unknown>,
 ) {
     const appLib = new ApiAppLib();
+
     try {
         if (req.method !== 'GET')
             throw new Error(
@@ -25,7 +26,7 @@ export default async function handler(
         const realUserName = ApiAppLib.getQueryParamValue(userName);
         const roles = await appLib.getUserRoles(realUserName);
         return res.status(200).json(roles);
-    } catch (e) {
-        return ApiAppLib.makeAxiosErrorResponse({ e, res });
+    } catch (error) {
+        return ApiAppLib.makeAxiosErrorResponse({ error, res });
     }
 }

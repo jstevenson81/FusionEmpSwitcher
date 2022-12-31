@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios'
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import _ from 'lodash'
 import { NextApiResponse } from 'next'
 
@@ -28,22 +28,25 @@ export default class ApiAppLib {
         return _.isUndefined(firstValue) ? '' : firstValue;
     }
     public static makeAxiosErrorResponse({
-        e,
+        error,
         res,
+        config,
+        response,
     }: {
-        e: any;
+        error: any;
         res: NextApiResponse;
+        config?: AxiosRequestConfig;
+        response?: AxiosResponse<any>;
     }): void {
-        const customErr = e as CustomError<any>;
-        const axiosErr = e as AxiosError;
-        console.log(customErr);
-        console.log(axiosErr);
         return axios.isAxiosError(e)
-            ? res.status(400).json(CustomError.CreateFromAxiosError(axiosErr))
+            ? res
+                  .status(400)
+                  .json(CustomError.CreateFromAxiosError(e as AxiosError))
             : res.status(400).json(
                   CustomError.Create<any>({
-                      config: customErr.httpConfig,
-                      errMsg: customErr.message,
+                      error,
+                      config,
+                      response,
                   }),
               );
     }
