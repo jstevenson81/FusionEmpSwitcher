@@ -44,7 +44,7 @@ export default async function handler(
                 "The body of the request must contain a user's user id as it is in the pod.",
             );
         }
-    } catch (e) {
-        return ApiAppLib.makeAxiosErrorResponse({ e, res });
+    } catch (error: any) {
+        return ApiAppLib.makeAxiosErrorResponse({ error, res });
     }
 }
